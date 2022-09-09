@@ -1,7 +1,7 @@
 #include <iostream>
 #include <list>
 #include <unordered_map>
-#include <map>
+#include <assert.h>
 
 namespace cashes
 {
@@ -21,8 +21,8 @@ public:
    
     bool check_full () const 
     {
-        size_t csize = cashe_.size;
-        assert (csize == hash_.size); 
+        int csize = cashe_.size ();
+        assert (csize == hash_.size ()); 
 
         return (csize == sz_);
     }
@@ -34,16 +34,21 @@ public:
         {
             if (check_full ())
             {
-                hash_.erase (cashe_.end ());
+                hash_.erase (cashe_.back ());
                 cashe_.pop_back ();
             }
             
             cashe_.push_front (slow_get_page (key));
-            hash_[key] = cashe.begin ();
+            hash_[key] = cashe_.begin ();
 
             return false;
         }
-       
+
+        auto pos       = hit->second;
+        auto first_pos = cashe_.begin ();
+        if (pos != first_pos)
+            cashe_.splice (first_pos, cashe_, pos);
+        
         return true;
     }
 
