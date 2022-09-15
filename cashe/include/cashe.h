@@ -18,9 +18,11 @@ template <typename T, typename keyT = int> struct cashe_t
 {
 private:
     size_t      sz_         = 0;
-    cashe_type  cashe_type_ = LRU;
+    cashe_type  cashe_type_ = LRU; 
 
     std::list <T> cashe_;
+    typename std::list <T>::iterator it_unuse_page_ = cashe_.begin ();      //only for LFU
+    T unuse_page_;                                                          //only for LFU
 
     using ListPtr = typename std::list <T>::iterator;
     std::unordered_map <keyT, ListPtr> hash_;
@@ -53,6 +55,22 @@ private:
     	return true;
     }
 
+//-------------------------------------------------------------------------------------------------
+//--------------------------------------Cashe-type-LFU---------------------------------------------
+//-------------------------------------------------------------------------------------------------
+    template <typename F> bool update_as_LFU (const keyT key, const F slow_get_page)
+    {
+        auto hit = hash_.find (key);
+        if (hit == hash_.end ())
+        {
+            if (check_full ())
+            { 
+                hash_.erase  (unuse_page_);
+                cashe_.erase (it_unuse_page_);
+            }
+        }
+    }
+
 public:
     cashe_t (size_t sz, cashe_type cashe_type = LRU): sz_ {sz}, cashe_type_ {cashe_type} {};
    
@@ -70,6 +88,9 @@ public:
         {
             case LRU:
                 return update_as_LRU (key, slow_get_page);
+            
+            case LFU:
+                return update_as_LFU (key, slow_get_page);
 
             default:
                 assert (!"ERROR!!! Unknown type of cashe");
