@@ -3,8 +3,9 @@
 
 #include "include/cashe.h"
 
-int get_hits 		    (FILE* papers);
-int slow_get_page_int 	(int key);
+int     get_hits 		    (FILE* papers);
+int     slow_get_page_int 	(int key);
+char    slow_get_page_char  (int key);
 
 int main (int argc, char* argv[])
 {
@@ -35,7 +36,7 @@ int get_hits (FILE* source)
     int num_keys = 0;
     fscanf (source, "%d", &num_keys);
    
-    cashes::cashe_t<int> cashe (5, cashes::LRU);
+    cashes::cashe_t<char> cashe (5, cashes::LRU);
 
     int hits    = 0;
     int key     = 0;
@@ -44,13 +45,18 @@ int get_hits (FILE* source)
     for (int i = 0; i < num_keys; i++)
     {
         printf ("%d\n", key);
-        if (cashe.lookup_update (key, slow_get_page_int))
+        if (cashe.lookup_update (key, slow_get_page_char))
             hits++;
 
         fscanf (source, "%d", &key);
     }
 
     return hits;
+}
+
+char slow_get_page_char (int key)
+{
+    return char (key);
 }
 
 int slow_get_page_int (int key)

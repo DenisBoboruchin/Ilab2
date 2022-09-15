@@ -20,39 +20,38 @@ private:
     size_t      sz_         = 0;
     cashe_type  cashe_type_ = LRU; 
 
-    std::list <T> cashe_;
-    typename std::list <T>::iterator it_unuse_page_ = cashe_.begin ();      //only for LFU
-    T unuse_page_;                                                          //only for LFU
 
-    using ListPtr = typename std::list <T>::iterator;
-    std::unordered_map <keyT, ListPtr> hash_;
+    std::list<std::pair<T, keyT>> cashe_;
+
+    std::unordered_map<keyT, std::pair<T, keyT>*> hash_;
+    using hashItr = typename std::unordered_map<keyT, std::pair<T, keyT>*>::iterator;
+
+    typename std::list<std::pair<T, keyT>>::iterator itr_unuse_page_ = cashe_.begin (); //only for LFU
+    T unuse_page_;                                                                      //only for LFU
 
 //-------------------------------------------------------------------------------------------------
 //--------------------------------------Cashe-type-LRU---------------------------------------------
 //-------------------------------------------------------------------------------------------------
     template <typename F> bool update_as_LRU (const keyT key, const F slow_get_page)
     {
-        auto hit = hash_.find (key);
-    	if (hit == hash_.end ())
-    	{
-        	if (check_full ())
-        	{
-        	    hash_.erase (cashe_.back ());
-        	    cashe_.pop_back ();
-        	}
-            
-        	cashe_.push_front (slow_get_page (key));
-	        hash_[key] = cashe_.begin ();
+        hashItr new_page_itr = hash_.find (key);
 
-        	return false;
-    	}
+        if (new_page_itr == hash_.end ())
+        {
+            if (check_full ())
+            {
+                hash_.erase (cashe_.back().second);
+                cashe_.pop_back ();
+            }
 
-    	auto pos       = hit->second;
-    	auto pos_first = cashe_.begin ();
-    	if (pos != pos_first)
-        	cashe_.splice (pos_first, cashe_, pos);
-        
-    	return true;
+            std::pair<T, keyT> new_elem = std::pair (slow_get_page (key), key);
+            cashe_.push_front (new_elem);
+            hash_[key] = &new_elem;
+
+            return true;
+        }
+
+
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -65,8 +64,10 @@ private:
         {
             if (check_full ())
             { 
-                hash_.erase  (unuse_page_);
-                cashe_.erase (it_unuse_page_);
+                //if (itr_unuse_page_ == 0)
+
+                //hash_.erase  (unuse_page_);
+                //cashe_.erase (itr_unuse_page_);
             }
         }
     }
