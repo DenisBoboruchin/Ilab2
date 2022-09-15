@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <list>
 #include <unordered_map>
@@ -6,18 +8,53 @@
 namespace cashes
 {
 
+enum cashe_type
+{
+    LRU = 1,
+    LFU
+};
+
 template <typename T, typename keyT = int> struct cashe_t 
 {
 private:
-    size_t  sz_     = 0;
-    
+    size_t      sz_         = 0;
+    cashe_type  cashe_type_ = LRU;
+
     std::list <T> cashe_;
 
     using ListPtr = typename std::list <T>::iterator;
     std::unordered_map <keyT, ListPtr> hash_;
 
+//-------------------------------------------------------------------------------------------------
+//--------------------------------------Cashe-type-LRU---------------------------------------------
+//-------------------------------------------------------------------------------------------------
+    template <typename F> bool update_as_LRU (const keyT key, const F slow_get_page)
+    {
+        auto hit = hash_.find (key);
+    	if (hit == hash_.end ())
+    	{
+        	if (check_full ())
+        	{
+        	    hash_.erase (cashe_.back ());
+        	    cashe_.pop_back ();
+        	}
+            
+        	cashe_.push_front (slow_get_page (key));
+	        hash_[key] = cashe_.begin ();
+
+        	return false;
+    	}
+
+    	auto pos       = hit->second;
+    	auto pos_first = cashe_.begin ();
+    	if (pos != pos_first)
+        	cashe_.splice (pos_first, cashe_, pos);
+        
+    	return true;
+    }
+
 public:
-    cashe_t (size_t sz): sz_ {sz} {};
+    cashe_t (size_t sz, cashe_type cashe_type = LRU): sz_ {sz}, cashe_type_ {cashe_type} {};
    
     bool check_full () const 
     {
@@ -27,31 +64,17 @@ public:
         return (csize == sz_);
     }
 	
-    template <typename F> bool lookup_update (keyT key, F slow_get_page)
+    template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
     {
-        auto hit = hash_.find (key);
-        if (hit == hash_.end ())
+        switch (cashe_type_)
         {
-            if (check_full ())
-            {
-                hash_.erase (cashe_.back ());
-                cashe_.pop_back ();
-            }
-            
-            cashe_.push_front (slow_get_page (key));
-            hash_[key] = cashe_.begin ();
+            case LRU:
+                return update_as_LRU (key, slow_get_page);
 
-            return false;
+            default:
+                assert (!"ERROR!!! Unknown type of cashe");
         }
-
-        auto pos       = hit->second;
-        auto first_pos = cashe_.begin ();
-        if (pos != first_pos)
-            cashe_.splice (first_pos, cashe_, pos);
-        
-        return true;
     }
-
 };
 
 };  

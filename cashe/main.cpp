@@ -3,7 +3,7 @@
 
 #include "include/cashe.h"
 
-int get_hits 		(FILE* papers);
+int get_hits 		    (FILE* papers);
 int slow_get_page_int 	(int key);
 
 int main (int argc, char* argv[])
@@ -15,8 +15,8 @@ int main (int argc, char* argv[])
         exit (1);
     }
     
-    char*   filename = argv[1];
-    FILE*   papers = fopen (filename, "r");
+    char* filename  = argv[1];
+    FILE* papers    = fopen (filename, "r");
     if (!papers)
     {
         printf ("Unknown file \"%s\"", filename);
@@ -35,7 +35,7 @@ int get_hits (FILE* source)
     int num_keys = 0;
     fscanf (source, "%d", &num_keys);
    
-    cashes::cashe_t<int> cashe (5);
+    cashes::cashe_t<int> cashe (5, cashes::LRU);
 
     int hits    = 0;
     int key     = 0;
