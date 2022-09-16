@@ -17,26 +17,43 @@ enum cashe_type
 template <typename T, typename keyT = int> struct cashe_t 
 {
 private:
+    FILE*       log_cashe_  = fopen ("dump/log_cashe.txt", "w+");
+
     size_t      sz_         = 0;
     cashe_type  cashe_type_ = LRU; 
 
-
     std::list<std::pair<T, keyT>> cashe_;
+    using listItr = typename std::list<std::pair<T, keyT>>::iterator;
 
-    std::unordered_map<keyT, std::pair<T, keyT>*> hash_;
-    using hashItr = typename std::unordered_map<keyT, std::pair<T, keyT>*>::iterator;
+    std::unordered_map<keyT, listItr> hash_;
+    using hashItr = typename std::unordered_map<keyT, listItr>::iterator;
 
     typename std::list<std::pair<T, keyT>>::iterator itr_unuse_page_ = cashe_.begin (); //only for LFU
     T unuse_page_;                                                                      //only for LFU
+
+    void output_cashe_ (void)
+    {       
+        fprintf (log_cashe_, "in cashe: ");
+            
+    	listItr itr_elem = cashe_.begin ();
+    	while (itr_elem != cashe_.end ())
+    	{
+        	fprintf (log_cashe_, "{%d, %d} ", itr_elem->first, itr_elem->second);
+
+        	itr_elem++;
+    	}
+
+    	fprintf (log_cashe_, "\n");
+    } 
 
 //-------------------------------------------------------------------------------------------------
 //--------------------------------------Cashe-type-LRU---------------------------------------------
 //-------------------------------------------------------------------------------------------------
     template <typename F> bool update_as_LRU (const keyT key, const F slow_get_page)
     {
-        hashItr new_page_itr = hash_.find (key);
+        hashItr hash_itr_page = hash_.find (key);
 
-        if (new_page_itr == hash_.end ())
+        if (hash_itr_page == hash_.end ())
         {
             if (check_full ())
             {
@@ -44,14 +61,20 @@ private:
                 cashe_.pop_back ();
             }
 
-            std::pair<T, keyT> new_elem = std::pair (slow_get_page (key), key);
-            cashe_.push_front (new_elem);
-            hash_[key] = &new_elem;
+            cashe_.push_front (std::pair (slow_get_page (key), key));
+            hash_[key] = cashe_.begin ();
 
-            return true;
+            output_cashe_ ();
+            return false;
         }
 
 
+        listItr page_itr = hash_itr_page->second;
+        if (page_itr != cashe_.begin ())
+            cashe_.splice (cashe_.begin (), cashe_, page_itr);
+
+        output_cashe_ ();
+        return true;
     }
 
 //-------------------------------------------------------------------------------------------------

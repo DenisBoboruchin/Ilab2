@@ -44,7 +44,7 @@ int get_hits (FILE* source)
 
     for (int i = 0; i < num_keys; i++)
     {
-        printf ("%d\n", key);
+        printf ("добавляем %d\n", key);
         if (cashe.lookup_update (key, slow_get_page_char))
             hits++;
 
