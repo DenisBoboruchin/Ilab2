@@ -1,7 +1,7 @@
 CC		= g++
 CFLAGS  = -c -w -Wall
 
-all: main.o cashe.o
+all: main.o cashe.o dir_dump
 	$(CC) main.cpp src/cashe.cpp -o main 
 
 main.o: main.cpp
@@ -10,5 +10,8 @@ main.o: main.cpp
 cashe.o: src/cashe.cpp
 	$(CC) $(CFLAGS) src/cashe.cpp
 
+dir_dump:
+	@if [ ! -d "dump" ] ; then mkdir "dump" ; fi
+
 clean:
-	rm -rf *.out *.o main
+	rm -rf *.out *.o main dump/*

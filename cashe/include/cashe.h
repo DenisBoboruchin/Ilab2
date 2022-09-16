@@ -8,19 +8,31 @@
 namespace cashes
 {
 
-enum cashe_type
+//-------------------------------------------------------------------------------------------------
+//--------------------------------------Cashe-type-LFU---------------------------------------------
+//-------------------------------------------------------------------------------------------------
+template <typename T, typename keyT = int> struct cashe_lfu
 {
-    LRU = 1,
-    LFU
+private:
+    FILE*       log_cashe_ = fopen ("dump/log_cashe.txt", "w+");
+
+public:
+    template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
+    {
+        return true;
+    }
+
 };
 
-template <typename T, typename keyT = int> struct cashe_t 
+//-------------------------------------------------------------------------------------------------
+//--------------------------------------Cashe-type-LRU---------------------------------------------
+//-------------------------------------------------------------------------------------------------
+template <typename T, typename keyT = int> struct cashe_lru 
 {
 private:
     FILE*       log_cashe_  = fopen ("dump/log_cashe.txt", "w+");
 
     size_t      sz_         = 0;
-    cashe_type  cashe_type_ = LRU; 
 
     std::list<std::pair<T, keyT>> cashe_;
     using listItr = typename std::list<std::pair<T, keyT>>::iterator;
@@ -31,7 +43,7 @@ private:
     typename std::list<std::pair<T, keyT>>::iterator itr_unuse_page_ = cashe_.begin (); //only for LFU
     T unuse_page_;                                                                      //only for LFU
 
-    void output_cashe_ (void)
+    void cashe_dump_ (void)
     {       
         fprintf (log_cashe_, "in cashe: ");
             
@@ -46,10 +58,18 @@ private:
     	fprintf (log_cashe_, "\n");
     } 
 
-//-------------------------------------------------------------------------------------------------
-//--------------------------------------Cashe-type-LRU---------------------------------------------
-//-------------------------------------------------------------------------------------------------
-    template <typename F> bool update_as_LRU (const keyT key, const F slow_get_page)
+public:
+    cashe_lru (size_t sz): sz_ {sz} {};
+   
+    bool check_full () const 
+    {
+        int csize = cashe_.size ();
+        assert (csize == hash_.size ()); 
+
+        return (csize == sz_);
+    }
+	
+    template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
     {
         hashItr hash_itr_page = hash_.find (key);
 
@@ -64,7 +84,7 @@ private:
             cashe_.push_front (std::pair (slow_get_page (key), key));
             hash_[key] = cashe_.begin ();
 
-            output_cashe_ ();
+            cashe_dump_ ();
             return false;
         }
 
@@ -73,52 +93,8 @@ private:
         if (page_itr != cashe_.begin ())
             cashe_.splice (cashe_.begin (), cashe_, page_itr);
 
-        output_cashe_ ();
+        cashe_dump_ ();
         return true;
-    }
-
-//-------------------------------------------------------------------------------------------------
-//--------------------------------------Cashe-type-LFU---------------------------------------------
-//-------------------------------------------------------------------------------------------------
-    template <typename F> bool update_as_LFU (const keyT key, const F slow_get_page)
-    {
-        auto hit = hash_.find (key);
-        if (hit == hash_.end ())
-        {
-            if (check_full ())
-            { 
-                //if (itr_unuse_page_ == 0)
-
-                //hash_.erase  (unuse_page_);
-                //cashe_.erase (itr_unuse_page_);
-            }
-        }
-    }
-
-public:
-    cashe_t (size_t sz, cashe_type cashe_type = LRU): sz_ {sz}, cashe_type_ {cashe_type} {};
-   
-    bool check_full () const 
-    {
-        int csize = cashe_.size ();
-        assert (csize == hash_.size ()); 
-
-        return (csize == sz_);
-    }
-	
-    template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
-    {
-        switch (cashe_type_)
-        {
-            case LRU:
-                return update_as_LRU (key, slow_get_page);
-            
-            case LFU:
-                return update_as_LFU (key, slow_get_page);
-
-            default:
-                assert (!"ERROR!!! Unknown type of cashe");
-        }
     }
 };
 
