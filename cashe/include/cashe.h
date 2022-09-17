@@ -14,9 +14,20 @@ namespace cashes
 template <typename T, typename keyT = int> struct cashe_lfu
 {
 private:
-    FILE*       log_cashe_ = fopen ("dump/log_cashe.txt", "w+");
+    FILE*       log_cashe_  = fopen ("dump/log_cashe.txt", "w+");
+    
+    size_t      sz_         = 0;
+
+    //std::unordered_map<keyT, std::list<T>> cashe_;
 
 public:
+    cashe_lfu (size_t sz): sz_ {sz} {};
+
+    /*bool check_full ()
+    {
+
+    }*/
+
     template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
     {
         return true;
@@ -39,9 +50,6 @@ private:
 
     std::unordered_map<keyT, listItr> hash_;
     using hashItr = typename std::unordered_map<keyT, listItr>::iterator;
-
-    typename std::list<std::pair<T, keyT>>::iterator itr_unuse_page_ = cashe_.begin (); //only for LFU
-    T unuse_page_;                                                                      //only for LFU
 
     void cashe_dump_ (void)
     {       
