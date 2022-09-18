@@ -17,19 +17,34 @@ private:
     FILE*       log_cashe_  = fopen ("dump/log_cashe.txt", "w+");
     
     size_t      sz_         = 0;
+    size_t      size        = 0;
+ 
+    //keyT -> frequency including
+    std::unordered_map<keyT, int> hash_;     
 
-    //std::unordered_map<keyT, std::list<T>> cashe_;
+    using hashItr  = typename std::unordered_map<keyT, int>::iterator;
+
+    //frequency -> list with pages with this frequency
+    std::unordered_map<int, std::list<std::pair<T, keyT>>> cashe_; 
 
 public:
     cashe_lfu (size_t sz): sz_ {sz} {};
 
-    /*bool check_full ()
-    {
-
-    }*/
+    bool check_full () {assert (size == sz_);} 
 
     template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
     {
+        hashItr hash_itr_page = hash_.find (key);
+
+        if (hash_itr_page == hash_.end ())
+        {
+            if (check_full ())
+            {
+
+                //cashe_[find_min_freq_ ()].
+            }
+        }
+
         return true;
     }
 
