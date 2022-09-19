@@ -19,6 +19,8 @@ private:
     size_t      sz_         = 0;
     size_t      size        = 0;
  
+    const int   start_freq  = 1;
+
     //keyT -> frequency including
     std::unordered_map<keyT, int> hash_;     
 
@@ -27,10 +29,22 @@ private:
     //frequency -> list with pages with this frequency
     std::unordered_map<int, std::list<std::pair<T, keyT>>> cashe_; 
 
+    int find_min_freq_ ()
+    {
+        int min_freq = 0;
+        while (true)
+        {
+            if (cashe_.find (min_freq) != cashe_.end ())
+                return min_freq;
+
+            min_freq++;
+        }
+    }
+
 public:
     cashe_lfu (size_t sz): sz_ {sz} {};
 
-    bool check_full () {assert (size == sz_);} 
+    bool check_full () {return (size == sz_);} 
 
     template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
     {
@@ -40,10 +54,28 @@ public:
         {
             if (check_full ())
             {
-
-                //cashe_[find_min_freq_ ()].
+                int min_freq = find_min_freq_ ();
+                int delete_key = cashe_[min_freq].end()->second;
+    
+                hash_.erase (delete_key);
+                cashe_[min_freq].pop_back ();
+                
+                size--;
             }
+
+            hash_[key]  = start_freq;
+            cashe_[start_freq].push_front (std::pair (slow_get_page (key), key));
+
+            size++;
+
+            return false;
         }
+
+        std::pair<T, keyT> elem = std::pair (slow_get_page (key), key);
+        int freq_page = hash_itr_page->second;
+        cashe_[freq_page].remove (elem);
+        cashe_[++freq_page].push_front (elem);
+        hash_[key] = freq_page;
 
         return true;
     }
