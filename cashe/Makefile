@@ -1,8 +1,8 @@
 CC		= g++
-CFLAGS  = -c -w -Wall
+CFLAGS  = -c -w -Wall -Wextra
 
 all: main.o cashe.o dir_dump
-	$(CC) main.cpp src/cashe.cpp -o main
+	$(CC) main.cpp src/cashe.cpp -o main 
 
 main.o: main.cpp
 	$(CC) $(CFLAGS) main.cpp
