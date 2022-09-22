@@ -22,12 +22,12 @@ private:
     const int   start_freq  = 1;
 
     //keyT -> frequency including
-    std::unordered_map<keyT, int> hash_;     
+    std::unordered_map<keyT, int> hash_freq_;     
 
     using hashItr   = typename std::unordered_map<keyT, int>::iterator;
     using listItr   = typename std::list<std::pair<T, keyT>>::iterator;
 
-    std::unordered_map<keyT, listItr> hash_list_itr_;
+    std::unordered_map<keyT, listItr> hash_listItr_;
 
     //frequency -> list with pages with this frequency
     std::unordered_map<int, std::list<std::pair<T, keyT>>> cashe_; 
@@ -81,19 +81,19 @@ public:
 
     template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
     {
-        hashItr hash_itr_page = hash_.find (key);
+        hashItr hash_itr_page = hash_freq_.find (key);
 
         fprintf (log_cashe_, "add %d\n", key);
 
-        if (hash_itr_page == hash_.end ())
+        if (hash_itr_page == hash_freq_.end ())
         {
             if (check_full ())
             {
                 int min_freq = find_min_freq_ ();
                 int delete_key = (--cashe_[min_freq].end())->second;
     
-                hash_.erase (delete_key);
-                hash_list_itr_.erase (delete_key);
+                hash_freq_.erase (delete_key);
+                hash_listItr_.erase (delete_key);
                 cashe_[min_freq].pop_back ();
 
                 size--;
@@ -101,8 +101,8 @@ public:
         
             cashe_[start_freq].push_front ({slow_get_page (key), key});
          
-            hash_.emplace (key, start_freq);
-            hash_list_itr_.emplace (key, cashe_[start_freq].begin ());
+            hash_freq_.emplace (key, start_freq);
+            hash_listItr_.emplace (key, cashe_[start_freq].begin ());
 
             size++;
             
@@ -114,12 +114,12 @@ public:
         int freq_p = hash_itr_page->second;
         int new_freq_p = freq_p + 1;
 
-        cashe_[new_freq_p].splice (cashe_[new_freq_p].begin (), cashe_[freq_p], hash_list_itr_[key]);
+        cashe_[new_freq_p].splice (cashe_[new_freq_p].begin (), cashe_[freq_p], hash_listItr_[key]);
         if (!cashe_[freq_p].size ())
             cashe_.erase (freq_p);
     
-        hash_[key] = new_freq_p;
-        hash_list_itr_[key] = cashe_[new_freq_p].begin ();
+        hash_freq_[key] = new_freq_p;
+        hash_listItr_[key] = cashe_[new_freq_p].begin ();
 
         fprintf (log_cashe_, "hit\n");
         cashe_dump_ ();
