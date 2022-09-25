@@ -39,8 +39,8 @@ int get_hits (FILE* source)
    
     cashes::cashe_lfu<char> cashe (5);
 
-    int hits    = 0;
-    int key     = 0;
+    int hits = 0;
+    int key = 0;
     fscanf (source, "%d", &key);
 
     for (int i = 0; i < num_keys; i++)
