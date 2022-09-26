@@ -14,24 +14,22 @@ namespace cashes
 template <typename T, typename keyT = int> struct cashe_lfu
 {
 private:
-    FILE*       log_cashe_  = fopen ("dump/log_cashe.txt", "w+");
+    FILE* log_cashe_ = fopen ("dump/log_cashe.txt", "w+");
     
-    size_t      sz_         = 0;
-    size_t      size        = 0;
+    size_t capasity_ = 0;
+    size_t size_ = 0;
  
-    const int   start_freq  = 1;
+    const int START_FREQ = 1;
 
-    //keyT -> frequency including
     std::unordered_map<keyT, int> hash_freq_;     
 
-    using hashItr   = typename std::unordered_map<keyT, int>::iterator;
-    using listItr   = typename std::list<std::pair<T, keyT>>::iterator;
+    using hashItr = typename std::unordered_map<keyT, int>::iterator;
+    using listItr = typename std::list<std::pair<T, keyT>>::iterator;
 
     std::unordered_map<keyT, listItr> hash_listItr_;
 
-    //frequency -> list with pages with this frequency
     std::unordered_map<int, std::list<std::pair<T, keyT>>> cashe_; 
-    using casheItr  = typename std::unordered_map<int, std::list<std::pair<T, keyT>>>::iterator;
+    using casheItr = typename std::unordered_map<int, std::list<std::pair<T, keyT>>>::iterator;
 
     int find_min_freq_ ()
     {
@@ -44,40 +42,38 @@ private:
             min_freq++;
         }
     }
+    
+    void output_list (casheItr cashe_itr)
+    {
+        auto itr = cashe_.find (cashe_itr->first);
+        if (itr != cashe_.end ())
+        {    	   
+            listItr itr_end = itr->second.end ();
+            for (listItr page_itr = itr->second.begin (); page_itr != itr_end; page_itr++)
+                fprintf (log_cashe_, "{%d, %d} ", page_itr->first, page_itr->second);
+
+            fprintf (log_cashe_, "\n");
+        }
+
+    }
 
     void cashe_dump_ ()
     {
-        casheItr cashe_itr = cashe_.begin ();
         casheItr cashe_end = cashe_.end ();
-
-        while (cashe_itr != cashe_end)
+        for (casheItr cashe_itr = cashe_.begin (); cashe_itr != cashe_end; cashe_itr++)
         {
             fprintf (log_cashe_, "freq %d: ", cashe_itr->first);
  
-            auto itr = cashe_.find (cashe_itr->first);
-            if (itr != cashe_.end ())
-            {    	    
-                listItr itr_elem = itr->second.begin ();
-    	        while (itr_elem != itr->second.end ())
-    	        {
-        	        fprintf (log_cashe_, "{%d, %d} ", itr_elem->first, itr_elem->second);
-
-        	        itr_elem++;
-    	        }
-
-                fprintf (log_cashe_, "\n");
-            }
-
-            cashe_itr++;
+            output_list (cashe_itr);
         }
 
         fprintf (log_cashe_, "\n\n\n");
     }
 
 public:
-    cashe_lfu (size_t sz): sz_ {sz} {};
+    cashe_lfu (size_t sz): capasity_ {sz} {};
 
-    bool check_full () {return (size == sz_);} 
+    bool check_full () {return (size_ == capasity_);} 
 
     template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
     {
@@ -96,15 +92,15 @@ public:
                 hash_listItr_.erase (delete_key);
                 cashe_[min_freq].pop_back ();
 
-                size--;
+                size_--;
             }
         
-            cashe_[start_freq].push_front ({slow_get_page (key), key});
+            cashe_[START_FREQ].push_front ({slow_get_page (key), key});
          
-            hash_freq_.emplace (key, start_freq);
-            hash_listItr_.emplace (key, cashe_[start_freq].begin ());
+            hash_freq_.emplace (key, START_FREQ);
+            hash_listItr_.emplace (key, cashe_[START_FREQ].begin ());
 
-            size++;
+            size_++;
             
             fprintf (log_cashe_, "mimo\n");
             cashe_dump_ ();
