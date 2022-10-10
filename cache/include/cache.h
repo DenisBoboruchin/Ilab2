@@ -7,7 +7,10 @@
 
 namespace caches
 {
+
 const size_t DEFAULT_CAPACITY = 10;
+const int START_FREQ = 1;
+
 //-------------------------------------------------------------------------------------------------
 //--------------------------------------cache-type-LFU---------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -17,22 +20,21 @@ template <typename T, typename keyT = int> struct cache_lfu_lists
 private:
     size_t capacity_ = DEFAULT_CAPACITY;
     size_t size_ = 0;   
-        
-    //using listsItr = typename std::list<std::list<elem_>>::iterator; 
+       
+    struct elem_;
+    using listsItr = typename std::list<std::pair<int, std::list<elem_>>>::iterator;
 
     struct elem_
     {
         T page_;
         keyT key_page_;
         
-        using listsItr = typename std::list<std::pair<int, std::list<elem_>>>::iterator;
-        listsItr itr_lists_;
+        listsItr lists_itr_;
     };
 
-    using listsItr = typename std::list<std::pair<int, std::list<elem_>>>::iterator;
     std::list<std::pair<int, std::list<elem_>>> lists_;
-
     using listItr = typename std::list<elem_>::iterator;
+
     std::unordered_map<keyT, listItr> hash_list_;
     using hashItr = typename std::unordered_map<keyT, listItr>::iterator;
 
@@ -49,20 +51,56 @@ public:
         hashItr hit = hash_list_.find (key);
         if (hit == hash_list_.end ())
         {
-           if (check_full_ ())
-           {
+            if (check_full_ ())
+            { 
                 listsItr unuse_pair_itr = lists_.begin ();  
+
                 listItr unuse_page_itr = --((unuse_pair_itr->second).end ());
                 keyT unuse_key = unuse_page_itr->key_page_;
 
                 hash_list_.erase (unuse_key);
                 unuse_pair_itr->second.pop_back ();
 
-                if (!unuse_pair_itr->second.size ())
-                    lists_.pop_front ();
-           }    
-        }
+                if (unuse_pair_itr->first != START_FREQ)
+                    if (!unuse_pair_itr->second.size ())
+                        lists_.pop_front ();
 
+                size_--;
+            }   
+            
+            listsItr first_pair_itr = lists_.begin ();
+            if (first_pair_itr->first != START_FREQ)
+            {
+               lists_.push_front ({START_FREQ, std::list<elem_> {}});
+
+               first_pair_itr = lists_.begin ();
+            }
+
+            first_pair_itr->second.push_front ({slow_get_page (key), key, first_pair_itr});
+            hash_list_[key] = first_pair_itr->second.begin ();
+
+            size_++;
+            return false;
+        }
+        
+        listItr itr_elem = hit->second;
+        listsItr itr_pair = itr_elem->lists_itr_;
+        listsItr itr_next_pair = std::next (itr_pair);
+        int& freq = itr_pair->first;
+
+        if ((itr_next_pair == lists_.end ()) || ((itr_next_pair)->first != freq + 1))
+            itr_next_pair = lists_.insert (itr_next_pair, {freq + 1, std::list<elem_> {}});
+       
+        std::list<elem_>& list_elem = itr_next_pair->second;
+        list_elem.splice (list_elem.begin (), itr_pair->second, itr_elem); 
+        if (itr_pair->first != START_FREQ)
+            if (!itr_pair->second.size ())
+                lists_.erase (itr_pair);
+    
+        hash_list_[key] = list_elem.begin ();
+
+        printf ("%d\n", itr_elem->page_);
+        return true;
     }
 };  
 
@@ -74,9 +112,7 @@ private:
     
     size_t capasity_ = DEFAULT_CAPACITY;
     size_t size_ = 0;
-    
-    const int START_FREQ = 1;
-    
+        
     std::unordered_map<keyT, int> hash_freq_;     
     
     using hashItr = typename std::unordered_map<keyT, int>::iterator;
