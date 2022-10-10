@@ -22,4 +22,4 @@ dir_dump:
 	@if [ ! -d "dump" ] ; then mkdir "dump" ; fi
 
 clean:
-	rm -rf *.out *.o *.gch main dump/*
+	rm -rf *.out *.o *.gch main cache dump/*
