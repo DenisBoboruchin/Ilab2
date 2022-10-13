@@ -4,9 +4,21 @@
 #include <list>
 #include <unordered_map>
 #include <assert.h>
+#include <cstdio>
 
 namespace caches
 {
+
+struct hits
+{
+    int hits_lru = 0;
+    int hits_lfu = 0;
+    int hits_beauty = 0;
+};
+
+hits get_hits ();
+int slow_get_page_int (int key);
+char slow_get_page_char (int key);
 
 const size_t DEFAULT_CAPACITY = 10;
 const int START_FREQ = 1;
@@ -18,6 +30,8 @@ const int START_FREQ = 1;
 template <typename T, typename keyT = int> struct cache_lfu_lists
 {
 private:
+    FILE* log_cache_  = fopen ("../dump/log_cache2.txt", "w+");
+
     size_t capacity_ = DEFAULT_CAPACITY;
     size_t size_ = 0;   
        
@@ -43,11 +57,34 @@ private:
         return size_ == capacity_;
     }
 
+    void cache_dump_ ()
+    {
+        listsItr end_lists = lists_.end ();
+        for (listsItr pair = lists_.begin (); pair != end_lists; ++pair)
+        {
+            printf ("freq_list: %d\n", pair->first);
+            printf ("size_list: %ld\n", pair->second.size ());
+            listItr elem = pair->second.begin ();
+            listItr last = pair->second.end ();
+            for (; elem != last; ++elem)
+            {
+                printf ("{%d} ", elem->page_);
+            }
+
+            printf ("\n");
+        }
+
+        printf ("\n");
+    }
+
 public:
     cache_lfu_lists (size_t capacity = DEFAULT_CAPACITY): capacity_ {capacity} {}; 
 
     template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
     {
+        printf ("add %d\n", key);
+        cache_dump_ ();
+        
         hashItr hit = hash_list_.find (key);
         if (hit == hash_list_.end ())
         {
@@ -77,6 +114,7 @@ public:
             }
 
             first_pair_itr->second.push_front ({slow_get_page (key), key, first_pair_itr});
+            printf ("size started: %ld\n", first_pair_itr->second.size ());
             hash_list_[key] = first_pair_itr->second.begin ();
 
             size_++;
@@ -85,21 +123,32 @@ public:
         
         listItr itr_elem = hit->second;
         listsItr itr_pair = itr_elem->lists_itr_;
-        listsItr itr_next_pair = std::next (itr_pair);
+        printf ("size cringe: %ld\n", itr_pair->second.size ());
+            
+        listsItr itr_next_pair = std::next(itr_pair);
         int& freq = itr_pair->first;
 
         if ((itr_next_pair == lists_.end ()) || ((itr_next_pair)->first != freq + 1))
+        {
             itr_next_pair = lists_.insert (itr_next_pair, {freq + 1, std::list<elem_> {}});
-       
+        }
         std::list<elem_>& list_elem = itr_next_pair->second;
-        list_elem.splice (list_elem.begin (), itr_pair->second, itr_elem); 
-        if (itr_pair->first != START_FREQ)
-            if (!itr_pair->second.size ())
-                lists_.erase (itr_pair);
-    
+
+        printf ("elem: %d\n", itr_elem->page_);
+        printf ("size before: %ld\n", itr_pair->second.size ());
+        
+        //auto endlist = itr_pair->second.end ();
+        //for (auto elem = itr_pair->second.begin (); elem != endlist)
+
+        list_elem.splice (list_elem.begin (), itr_pair->second, itr_elem);  
+        printf ("size after: %ld\n", itr_pair->second.size ());
+
+        
+        if (!itr_pair->second.size ())
+            lists_.erase (itr_pair);
+
         hash_list_[key] = list_elem.begin ();
 
-        printf ("%d\n", itr_elem->page_);
         return true;
     }
 };  
@@ -108,7 +157,7 @@ public:
 template <typename T, typename keyT = int> struct cache_lfu_hashes
 {
 private:
-    FILE* log_cache_ = fopen ("dump/log_cache.txt", "w+");
+    FILE* log_cache_ = fopen ("../dump/log_cache_hashes.txt", "w+");
     
     size_t capasity_ = DEFAULT_CAPACITY;
     size_t size_ = 0;

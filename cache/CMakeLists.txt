@@ -6,7 +6,6 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 include_directories(include)
 
 set(SOURCE_LIB src/cache.cpp)
-set(SOURCE_MAIN main.cpp)
 set(SOURCE_TEST tests/tests.cpp)
 
 include(FetchContent)
@@ -17,10 +16,11 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+add_compile_options(-g)
+
 add_library(cache_lib STATIC ${SOURCE_LIB})
-add_executable(main ${SOURCE_MAIN})
-add_executable(cache ${SOURCE_LIB})
 add_executable(test ${SOURCE_TEST})
 
-target_link_libraries(main cache_lib)
+add_definitions(-DPROJECT_DIR_PATH=\"${CMAKE_SOURCE_DIR}\")
+
 target_link_libraries(test gtest_main cache_lib)
