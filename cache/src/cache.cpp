@@ -1,7 +1,6 @@
 #include "cache.h"
 
 #include <iostream>
-#include <stdio.h>
 
 struct hits
 {
@@ -29,26 +28,27 @@ hits get_hits ()
     int capacity = 0;
 
     std::cin >> capacity;
-   
+    std::cout << "capacity: " << capacity << "\n";
+
     caches::cache_lru<char> cache_lru (capacity);
     caches::cache_lfu_lists<char> cache_lfu (capacity);
 
     int num_keys = 0;
     std::cin >> num_keys;
-
-    int key = 0;
-    std::cin >> key;
+    std::cout << "num_keys: " << num_keys << "\n";
 
     hits hits {};
-    for (int i = 1; i < num_keys; i++)
+    for (int i = 0; i < num_keys; i++)
     {
+        int key = 0;
+        std::cin >> key;
+        std::cout << "key" << i << ": " << key << "\n";
+
         if (cache_lru.lookup_update (key, slow_get_page_char))
             hits.hits_lru++;
 
         if (cache_lfu.lookup_update (key, slow_get_page_char))
             hits.hits_lfu++;
-
-        std::cin >> key;
     }
 
     return hits;
@@ -61,7 +61,7 @@ char slow_get_page_char (int key)
 
 int slow_get_page_int (int key)
 {
-    return key;
+    return key; 
 }
 
 
