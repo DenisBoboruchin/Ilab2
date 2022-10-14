@@ -114,7 +114,6 @@ public:
             }
 
             first_pair_itr->second.push_front ({slow_get_page (key), key, first_pair_itr});
-            printf ("size started: %ld\n", first_pair_itr->second.size ());
             hash_list_[key] = first_pair_itr->second.begin ();
 
             size_++;
@@ -123,31 +122,23 @@ public:
         
         listItr itr_elem = hit->second;
         listsItr itr_pair = itr_elem->lists_itr_;
-        printf ("size cringe: %ld\n", itr_pair->second.size ());
-            
-        listsItr itr_next_pair = std::next(itr_pair);
-        int& freq = itr_pair->first;
+           
+        listsItr itr_next_pair = std::next(itr_pair, 1);
 
-        if ((itr_next_pair == lists_.end ()) || ((itr_next_pair)->first != freq + 1))
+        if ((itr_next_pair == lists_.end ()) || ((itr_next_pair)->first != itr_pair->first + 1))
         {
-            itr_next_pair = lists_.insert (itr_next_pair, {freq + 1, std::list<elem_> {}});
+            printf ("create new list\n");
+            itr_next_pair = lists_.insert (itr_next_pair, {itr_pair->first + 1, std::list<elem_> {}});
         }
-        std::list<elem_>& list_elem = itr_next_pair->second;
+        //std::list<elem_>& list_elem = itr_next_pair->second;
 
-        printf ("elem: %d\n", itr_elem->page_);
-        printf ("size before: %ld\n", itr_pair->second.size ());
-        
-        //auto endlist = itr_pair->second.end ();
-        //for (auto elem = itr_pair->second.begin (); elem != endlist)
-
-        list_elem.splice (list_elem.begin (), itr_pair->second, itr_elem);  
-        printf ("size after: %ld\n", itr_pair->second.size ());
-
-        
+        itr_elem->lists_itr_ = itr_next_pair;
+        itr_next_pair->second.splice (itr_next_pair->second.begin (), itr_pair->second, itr_elem);  
+                
         if (!itr_pair->second.size ())
             lists_.erase (itr_pair);
 
-        hash_list_[key] = list_elem.begin ();
+        hash_list_[key] = itr_next_pair->second.begin ();
 
         return true;
     }
