@@ -16,7 +16,7 @@ struct hits
     int hits_beauty = 0;
 };
 
-hits get_hits ();
+hits get_hits (std::string file_name = {});
 int slow_get_page_int (int key);
 char slow_get_page_char (int key);
 
@@ -27,7 +27,7 @@ const int START_FREQ = 1;
 //--------------------------------------cache-type-LFU---------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-template <typename T, typename keyT = int> struct cache_lfu_lists
+template <typename T, typename keyT = int> struct cache_lfu
 {
 private:
     FILE* log_cache_  = fopen ("../dump/log_cache2.txt", "w+");
@@ -78,13 +78,10 @@ private:
     }
 
 public:
-    cache_lfu_lists (size_t capacity = DEFAULT_CAPACITY): capacity_ {capacity} {}; 
+    cache_lfu (size_t capacity = DEFAULT_CAPACITY): capacity_ {capacity} {}; 
 
     template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
-    {
-        printf ("add %d\n", key);
-        cache_dump_ ();
-        
+    {        
         hashItr hit = hash_list_.find (key);
         if (hit == hash_list_.end ())
         {
@@ -126,134 +123,26 @@ public:
         listsItr itr_next_pair = std::next(itr_pair, 1);
 
         if ((itr_next_pair == lists_.end ()) || ((itr_next_pair)->first != itr_pair->first + 1))
-        {
-            printf ("create new list\n");
             itr_next_pair = lists_.insert (itr_next_pair, {itr_pair->first + 1, std::list<elem_> {}});
-        }
-        //std::list<elem_>& list_elem = itr_next_pair->second;
+    
+        std::list<elem_>& list_elem = itr_next_pair->second;
 
+        list_elem.splice (list_elem.begin (), itr_pair->second, itr_elem);  
         itr_elem->lists_itr_ = itr_next_pair;
-        itr_next_pair->second.splice (itr_next_pair->second.begin (), itr_pair->second, itr_elem);  
-                
+               
         if (!itr_pair->second.size ())
             lists_.erase (itr_pair);
 
-        hash_list_[key] = itr_next_pair->second.begin ();
+        hash_list_[key] = list_elem.begin ();
 
         return true;
     }
 };  
 
+//-------------------------------------------------------------------------------------------------
+//------------------------------------cache-type-perfect-------------------------------------------
+//-------------------------------------------------------------------------------------------------
 
-template <typename T, typename keyT = int> struct cache_lfu_hashes
-{
-private:
-    FILE* log_cache_ = fopen ("../dump/log_cache_hashes.txt", "w+");
-    
-    size_t capasity_ = DEFAULT_CAPACITY;
-    size_t size_ = 0;
-        
-    std::unordered_map<keyT, int> hash_freq_;     
-    
-    using hashItr = typename std::unordered_map<keyT, int>::iterator;
-    using listItr = typename std::list<std::pair<T, keyT>>::iterator;
-    
-    std::unordered_map<keyT, listItr> hash_listItr_;
-    
-    std::unordered_map<int, std::list<std::pair<T, keyT>>> cache_; 
-    using cacheItr = typename std::unordered_map<int, std::list<std::pair<T, keyT>>>::iterator;
-    
-    int find_min_freq_ ()
-    {
-        int min_freq = 0;
-        while (true)
-        {
-            if (cache_.find (min_freq) != cache_.end ())
-                return min_freq;
-                
-            min_freq++;
-        }
-    }
-    
-    void output_list_ (cacheItr cache_itr)
-    {
-        auto itr = cache_.find (cache_itr->first);
-        if (itr != cache_.end ())
-        {    	   
-            listItr itr_end = itr->second.end ();
-            for (listItr page_itr = itr->second.begin (); page_itr != itr_end; page_itr++)
-                fprintf (log_cache_, "{%d, %d} ", page_itr->first, page_itr->second);
-
-            fprintf (log_cache_, "\n");
-        }
-    }
-
-    void cache_dump_ ()
-    {
-        cacheItr cache_end = cache_.end ();
-        for (cacheItr cache_itr = cache_.begin (); cache_itr != cache_end; cache_itr++)
-        {
-            fprintf (log_cache_, "freq %d: ", cache_itr->first);
- 
-            output_list_ (cache_itr);
-        }
-
-        fprintf (log_cache_, "\n\n\n");
-    }
-
-public:
-    cache_lfu_hashes (size_t sz): capasity_ {sz} {};
-
-    bool check_full () {return (size_ == capasity_);} 
-
-    template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
-    {
-        hashItr hash_itr_page = hash_freq_.find (key);
-
-        fprintf (log_cache_, "add %d\n", key);
-
-        if (hash_itr_page == hash_freq_.end ())
-        {
-            if (check_full ())
-            {
-                int min_freq = find_min_freq_ ();
-                int delete_key = (--cache_[min_freq].end())->second;
-    
-                hash_freq_.erase (delete_key);
-                hash_listItr_.erase (delete_key);
-                cache_[min_freq].pop_back ();
-
-                size_--;
-            }
-        
-            cache_[START_FREQ].push_front ({slow_get_page (key), key});
-         
-            hash_freq_.emplace (key, START_FREQ);
-            hash_listItr_.emplace (key, cache_[START_FREQ].begin ());
-
-            size_++;
-            
-            fprintf (log_cache_, "mimo\n");
-            cache_dump_ ();
-            return false;
-        }
-        
-        int freq_p = hash_itr_page->second;
-        int new_freq_p = freq_p + 1;
-
-        cache_[new_freq_p].splice (cache_[new_freq_p].begin (), cache_[freq_p], hash_listItr_[key]);
-        if (!cache_[freq_p].size ())
-            cache_.erase (freq_p);
-    
-        hash_freq_[key] = new_freq_p;
-        hash_listItr_[key] = cache_[new_freq_p].begin ();
-
-        fprintf (log_cache_, "hit\n");
-        cache_dump_ ();
-        return true;
-    }
-
-};
 
 
 //-------------------------------------------------------------------------------------------------
@@ -262,7 +151,7 @@ public:
 template <typename T, typename keyT = int> struct cache_lru 
 {
 private:
-    FILE*       log_cache_  = fopen ("dump/log_cache.txt", "w+");
+    FILE*       log_cache_  = fopen ("../dump/log_cache.txt", "w+");
 
     size_t      sz_         = 0;
 
@@ -314,7 +203,6 @@ public:
             cache_.push_front ({slow_get_page (key), key});
             hash_[key] = cache_.begin ();
 
-            //cache_dump_ ();
             return false;
         }
 
@@ -323,7 +211,6 @@ public:
         if (page_itr != cache_.begin ())
             cache_.splice (cache_.begin (), cache_, page_itr);
 
-        //cache_dump_ ();
         return true;
     }
 };

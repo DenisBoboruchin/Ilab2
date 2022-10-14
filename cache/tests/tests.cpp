@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <string>
-#include <fstream>
 #include <gtest/gtest.h>
 
 int main ()
@@ -14,21 +13,41 @@ int main ()
 
 TEST (all_caches, small_test_1)
 {
-    std::string local_file = PROJECT_DIR_PATH + std::string{"/tests/tests_files/"} + "small_test_1.txt";
-    
-    std::ifstream input;
-    input.open (local_file);
+    caches::hits hits = caches::get_hits ("small_test_1.txt");
 
-    std::streambuf* cinbuf = std::cin.rdbuf();
-    std::streambuf* new_buf = input.rdbuf ();
-    std::cin.rdbuf(new_buf);
-
-    caches::hits hits = caches::get_hits ();
-
-    std::cout << "lru hits: " << hits.hits_lru << "\n";
-    std::cout << "lfu hits: " << hits.hits_lfu << "\n";
-    std::cout << "beauty hits: " << hits.hits_beauty << "\n";
-
-    std::cin.rdbuf(cinbuf);
+    ASSERT_EQ (hits.hits_lru, 6);
+    ASSERT_EQ (hits.hits_lfu, 5);
 }
 
+TEST (all_caches, small_test_2)
+{
+    caches::hits hits = caches::get_hits ("small_test_2.txt");
+
+    ASSERT_EQ (hits.hits_lru, 3);
+    ASSERT_EQ (hits.hits_lfu, 1);
+}
+
+TEST (all_caches, small_test_3)
+{
+    caches::hits hits = caches::get_hits ("small_test_3.txt");
+
+    ASSERT_EQ (hits.hits_lru, 2);
+    ASSERT_EQ (hits.hits_lfu, 3);
+}
+
+TEST (all_caches, small_test_4)
+{
+    caches::hits hits = caches::get_hits ("small_test_4.txt");
+
+    ASSERT_EQ (hits.hits_lru, 1);
+    ASSERT_EQ (hits.hits_lfu, 4);
+}
+
+TEST (all_caches, big_trivial_test_10000000)
+{
+    caches::hits hits = caches::get_hits ("big_trivial_test_10000000.txt");
+
+    ASSERT_EQ (hits.hits_lru, 0);
+    ASSERT_EQ (hits.hits_lfu, 0);
+
+}
