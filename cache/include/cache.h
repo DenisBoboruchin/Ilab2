@@ -19,8 +19,7 @@ struct hits
 hits get_hits (std::string file_name = {});
 int slow_get_page_int (int key);
 char slow_get_page_char (int key);
-
-const size_t DEFAULT_CAPACITY = 10;
+    
 const int START_FREQ = 1;
 
 //-------------------------------------------------------------------------------------------------
@@ -30,9 +29,8 @@ const int START_FREQ = 1;
 template <typename T, typename keyT = int> struct cache_lfu
 {
 private:
-    FILE* log_cache_  = fopen ("../dump/log_cache2.txt", "w+");
+    size_t capacity_ = 10;
 
-    size_t capacity_ = DEFAULT_CAPACITY;
     size_t size_ = 0;   
        
     struct elem_;
@@ -78,7 +76,7 @@ private:
     }
 
 public:
-    cache_lfu (size_t capacity = DEFAULT_CAPACITY): capacity_ {capacity} {}; 
+    cache_lfu (size_t capacity): capacity_ {capacity} {}; 
 
     template <typename F> bool lookup_update (const keyT key, const F slow_get_page)
     {        
@@ -151,9 +149,7 @@ public:
 template <typename T, typename keyT = int> struct cache_lru 
 {
 private:
-    FILE*       log_cache_  = fopen ("../dump/log_cache.txt", "w+");
-
-    size_t      sz_         = 0;
+    size_t capacity_ = 10;
 
     std::list<std::pair<T, keyT>> cache_;
     using listItr = typename std::list<std::pair<T, keyT>>::iterator;
@@ -163,29 +159,29 @@ private:
 
     void cache_dump_ (void)
     {       
-        fprintf (log_cache_, "in cache: ");
+        printf ("in cache: ");
             
     	listItr itr_elem = cache_.begin ();
         listItr itr_end  = cache_.end ();
     	while (itr_elem != itr_end)
     	{
-        	fprintf (log_cache_, "{%d, %d} ", itr_elem->first, itr_elem->second);
+        	printf ("{%d, %d} ", itr_elem->first, itr_elem->second);
 
         	itr_elem++;
     	}
 
-    	fprintf (log_cache_, "\n");
+    	printf ("\n");
     } 
 
 public:
-    cache_lru (size_t sz): sz_ {sz} {};
+    cache_lru (size_t capacity): capacity_ {capacity} {};
    
     bool check_full () const 
     {
         int csize = cache_.size ();
         assert (csize == hash_.size ()); 
 
-        return (csize == sz_);
+        return (csize == capacity_);
     }
 	
     template <typename F> bool lookup_update (const keyT key, const F slow_get_page)

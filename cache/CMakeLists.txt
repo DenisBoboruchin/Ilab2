@@ -8,19 +8,31 @@ include_directories(include)
 set(SOURCE_LIB src/cache.cpp)
 set(SOURCE_TEST tests/tests.cpp)
 
-include(FetchContent)
-FetchContent_Declare(
-    googletest
- 
-    URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
-)
-FetchContent_MakeAvailable(googletest)
-
 add_compile_options(-g)
-
-add_library(cache_lib STATIC ${SOURCE_LIB})
-add_executable(test ${SOURCE_TEST})
+add_library(${PROJECT_NAME} STATIC ${SOURCE_LIB})
 
 add_definitions(-DPROJECT_DIR_PATH=\"${CMAKE_SOURCE_DIR}\")
 
-target_link_libraries(test gtest_main cache_lib)
+#tests
+option(TESTING "Include testing" ON)
+if (TESTING)
+    message ("Include testing")
+    find_package (GTest REQUIRED)
+    include_directories (${GTEST_INCLUDE_DIRS})
+
+    add_executable (${PROJECT_NAME}_tests ${SOURCE_TEST})
+
+    target_link_libraries (${PROJECT_NAME}_tests PUBLIC GTest::GTest GTest::Main caches)
+    enable_testing ()
+
+    add_dependencies (${PROJECT_NAME}_tests ${PROJECT_NAME})
+endif ()
+
+#sanitizers
+option(SANITIZERS "Include sanitizers" ON)
+if (SANITIZERS)
+    message ("Build with sanitizers")
+
+    add_compile_options (-fsanitize=address -fsanitize=undefined -g)
+    set_target_properties (${PROJECT_NAME}_tests PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
+endif ()

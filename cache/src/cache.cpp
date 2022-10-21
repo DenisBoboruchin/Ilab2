@@ -8,19 +8,17 @@ namespace caches
 
 hits get_hits (std::string file_name)
 {
-    bool flag_file = file_name.empty ();
-
     std::ifstream input;
-    std::streambuf* cin_buf =std::cin.rdbuf ();
-    std::streambuf* new_buf;
+    std::streambuf* cin_buf = std::cin.rdbuf ();
 
-    if (!flag_file)
+    if (file_name.size ())
     {
         std::string local_file = PROJECT_DIR_PATH 
                             + std::string{"/tests/tests_files/"} + file_name;    
         
         input.open (local_file);
-        new_buf = input.rdbuf ();
+        
+        std::streambuf* new_buf = input.rdbuf ();
         std::cin.rdbuf(new_buf);
     }
    
@@ -47,7 +45,6 @@ hits get_hits (std::string file_name)
     }
 
     std::cin.rdbuf(cin_buf);
-
     return hits;
 }
 
