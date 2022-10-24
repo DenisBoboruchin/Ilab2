@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <list>
+#include <vector>
 #include <unordered_map>
 #include <assert.h>
 #include <cstdio>
@@ -141,7 +142,56 @@ public:
 //------------------------------------cache-type-perfect-------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
+template <typename T, typename keyT = int> struct cache_perfect
+{
+private:
+    size_t capacity_ = 10;
+    
+    struct elem_
+    {
+        T page;
+        keyT key;
+        int freq;
+    };
 
+    std::list<elem_> cache_;
+    using listItr = typename std::list<elem_>::iterator;
+
+    std::unordered_map<keyT, listItr> hash_;
+    using hashItr = typename std::unordered_map<keyT, listItr>::iterator;
+
+    keyT find_useless_ (int num_key, std::vector<keyT> keys)
+    {
+        int freq = 0;
+        int min_freq = 0;
+        keyT key = keys[num_key];
+
+        for (int num_elem = num_key + 1; (num_elem - num_key != capacity_ + 1) && (num_elem <= keys.size ());
+                        num_elem++)
+        {
+            if (key == keys[num_elem])
+                freq++;
+        }
+        
+
+        if (!freq)
+            return num_key;
+    }
+
+public:
+    template <typename F>
+    bool lookup_update (int num_key, F slow_get_page, std::vector<keyT> keys)
+    {
+        hashItr hit = hash_.find (keys[num_key]);
+        if (hit == hash_.end())
+        {
+            keyT useless = find_useless_ (num_key, keys);
+
+            return false;
+        }
+        
+    }
+};
 
 //-------------------------------------------------------------------------------------------------
 //--------------------------------------cache-type-LRU---------------------------------------------

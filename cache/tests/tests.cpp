@@ -11,6 +11,12 @@ int main ()
     return RUN_ALL_TESTS();
 }
 
+/*
+TEST (all_cashes, test_from_cin)
+{
+    caches::hits hits = caches::get_hits ();
+}*/
+
 TEST (all_caches, small_test_1)
 {
     caches::hits hits = caches::get_hits ("small_test_1.txt");
