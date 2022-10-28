@@ -4,22 +4,11 @@
 #include <list>
 #include <vector>
 #include <unordered_map>
-#include <assert.h>
+#include <cassert>
 #include <cstdio>
 
 namespace caches
 {
-
-struct hits
-{
-    int hits_lru = 0;
-    int hits_lfu = 0;
-    int hits_beauty = 0;
-};
-
-hits get_hits (std::string file_name = {});
-int slow_get_page_int (int key);
-char slow_get_page_char (int key);
     
 const int START_FREQ = 1;
 

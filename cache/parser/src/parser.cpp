@@ -1,11 +1,27 @@
-#include "cache.h"
+#include "parser.h"
 
-#include <iostream>
-#include <fstream>
-#include <vector>
+static std::vector<int> read_keys (std::string file_name);
 
-namespace caches
-{
+hits get_hits (std::string file_name)
+{  
+    std::vector<int> keys = read_keys (file_name);
+
+    int capacity = keys[0];
+    caches::cache_lru<char> cache_lru (capacity);
+    caches::cache_lfu<char> cache_lfu (capacity);
+  
+    hits hits {};
+    for (int i = 1; i != keys.size(); i++)
+    {
+        if (cache_lru.lookup_update (keys[i], slow_get_page_char))
+            hits.hits_lru++;
+
+        if (cache_lfu.lookup_update (keys[i], slow_get_page_char))
+            hits.hits_lfu++;
+    }
+
+    return hits;
+}
 
 std::vector<int> read_keys (std::string file_name)
 {
@@ -53,27 +69,6 @@ std::vector<int> read_keys (std::string file_name)
     return keys;
 }
 
-hits get_hits (std::string file_name)
-{  
-    std::vector<int> keys = read_keys (file_name);
-
-    int capacity = keys[0];
-    caches::cache_lru<char> cache_lru (capacity);
-    caches::cache_lfu<char> cache_lfu (capacity);
-  
-    hits hits {};
-    for (int i = 1; i != keys.size(); i++)
-    {
-        if (cache_lru.lookup_update (keys[i], slow_get_page_char))
-            hits.hits_lru++;
-
-        if (cache_lfu.lookup_update (keys[i], slow_get_page_char))
-            hits.hits_lfu++;
-    }
-
-    return hits;
-}
-
 char slow_get_page_char (int key)
 {
     return char (key);
@@ -82,7 +77,5 @@ char slow_get_page_char (int key)
 int slow_get_page_int (int key)
 {
     return key; 
-}
-
 }
 
