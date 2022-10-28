@@ -28,15 +28,11 @@ std::vector<int> read_keys (std::string file_name)
     int capacity = 0;
     int num_keys = 0;    
     std::vector<int> keys;
- 
-    if (file_name.size ())
-    {
-        std::string local_file = PROJECT_DIR_PATH 
-                            + std::string{"/tests/tests_files/"} + file_name;    
-     
-        std::ifstream input;
-        input.open (local_file);
-        
+
+    std::ifstream input (file_name);
+
+    if (input)
+    {       
         input >> capacity;
         input >> num_keys;
 

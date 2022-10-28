@@ -38,6 +38,12 @@ if (TESTING)
     enable_testing ()
 
     add_dependencies (${PROJECT_NAME}_tests parser)
+
+    add_custom_target (run_${PROJECT_NAME}_tests 
+        COMMENT "Running ${PROJECT_NAME}_tests"    
+        COMMAND ./${PROJECT_NAME}_tests
+    )
+    add_dependencies (run_${PROJECT_NAME}_tests ${PROJECT_NAME}_tests)
 endif ()
 
 
