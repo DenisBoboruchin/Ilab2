@@ -149,27 +149,34 @@ private:
     std::unordered_map<keyT, listItr> hash_;
     using hashItr = typename std::unordered_map<keyT, listItr>::iterator;
 
-    keyT find_useless_ (int num_key, std::vector<keyT> keys)
+    keyT find_useless_ (int num_check_key, std::vector<keyT> keys)
     {
         int freq = 0;
         int min_freq = 0;
-        keyT key = keys[num_key];
-
-        for (int num_elem = num_key + 1; (num_elem - num_key != capacity_ + 1) && (num_elem <= keys.size ());
-                        num_elem++)
-        {
-            if (key == keys[num_elem])
-                freq++;
-        }
+        int size = keys.size();
         
+        keyT check_key = keys[num_check_key];
+        int count = 0;
+
+        for (int num_key = num_check_key + 1; (count != capacity_ + 1) && (num_key <= size); num_key++)
+        {
+            keyT key = keys[num_key];
+
+            if (hash_.find (key) == hash_.end ())
+                continue;
+
+            count++;
+            if (check_key == key)
+                freq++;
+        } 
 
         if (!freq)
-            return num_key;
+            return num_check_key;
     }
 
 public:
     template <typename F>
-    bool lookup_update (int num_key, F slow_get_page, std::vector<keyT> keys)
+    bool lookup_update (int num_key, F slow_get_page, const std::vector<keyT>& keys)
     {
         hashItr hit = hash_.find (keys[num_key]);
         if (hit == hash_.end())

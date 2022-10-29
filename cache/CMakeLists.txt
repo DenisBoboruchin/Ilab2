@@ -3,6 +3,12 @@ cmake_minimum_required(VERSION 3.22.1 FATAL_ERROR)
 set(PROJECT_NAME caches)
 project(${PROJECT_NAME} LANGUAGES CXX)
 
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_COMPILER g++)
+
 include_directories(caches/include parser/include)
 
 set(SOURCE_TEST tests/tests.cpp)
