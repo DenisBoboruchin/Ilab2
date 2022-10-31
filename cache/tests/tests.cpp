@@ -11,7 +11,7 @@ std::string get_local_file (std::string file_name)
 
 int main ()
 {
-    ::testing::InitGoogleTest();
+    testing::InitGoogleTest();
 
     return RUN_ALL_TESTS();
 }
