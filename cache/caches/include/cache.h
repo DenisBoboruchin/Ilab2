@@ -176,7 +176,7 @@ private:
         vectorItr num_next_activation = check_utility_ (keys, check_num_itr);
         keyT key = *(check_num_itr);
 
-        if (num_next_activation == keys.end ())
+        if (num_next_activation != keys.end ())
         {
             if (check_full_ ())
             {
@@ -216,12 +216,26 @@ public:
         while (check_num_itr != end_itr)
         {
             keyT key = *(check_num_itr);
-
             hashItr hit = hash_.find (key);
-    
+                
             if (hit != hash_.end ())
-            {
+            {               
+                vectorItr num_next_activation = check_utility_ (keys, check_num_itr);
+                
+                cacheItr erase = hit->second;
 
+                elem_ elem = erase->second;
+                cache_.erase (erase);
+                
+                if (num_next_activation != keys.end ())
+                {    
+                    cache_[num_next_activation] = elem;
+                    hash_[key] = cache_.find (num_next_activation);   
+                }
+
+                else
+                    hash_.erase (key);
+                
                 hits++;
             }
 

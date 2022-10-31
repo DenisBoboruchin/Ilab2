@@ -7,12 +7,14 @@ hits get_hits (std::string file_name)
     std::vector<int> keys = read_keys (file_name);
 
     int capacity = keys[0];
+    keys.erase (keys.begin ());
+
     caches::cache_lru<char> cache_lru (capacity);
     caches::cache_lfu<char> cache_lfu (capacity);
     caches::cache_perfect<char> cache_perfect (capacity);
 
     hits hits {};
-    for (int i = 1; i != keys.size(); i++)
+    for (int i = 0; i != keys.size(); i++)
     {
         if (cache_lru.lookup_update (keys[i], slow_get_page_char))
             hits.hits_lru++;
