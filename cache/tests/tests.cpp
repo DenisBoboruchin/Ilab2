@@ -54,6 +54,7 @@ TEST (all_caches, small_test_4)
     ASSERT_EQ (hits.hits_lfu, 4);
 }
 
+/*
 TEST (all_caches, big_trivial_test_1000000)
 {
     hits hits = get_hits (get_local_file ("big_trivial_test_1000000.txt"));
@@ -61,4 +62,4 @@ TEST (all_caches, big_trivial_test_1000000)
     ASSERT_EQ (hits.hits_lru, 0);
     ASSERT_EQ (hits.hits_lfu, 0);
 
-}
+}*/

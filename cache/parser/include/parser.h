@@ -8,7 +8,7 @@ struct hits
 {
     int hits_lru = 0;
     int hits_lfu = 0;
-    int hits_beauty = 0;
+    int hits_perfect = 0;
 };
 
 hits get_hits (std::string file_name = {});

@@ -9,7 +9,8 @@ hits get_hits (std::string file_name)
     int capacity = keys[0];
     caches::cache_lru<char> cache_lru (capacity);
     caches::cache_lfu<char> cache_lfu (capacity);
-  
+    caches::cache_perfect<char> cache_perfect (capacity);
+
     hits hits {};
     for (int i = 1; i != keys.size(); i++)
     {
@@ -19,6 +20,8 @@ hits get_hits (std::string file_name)
         if (cache_lfu.lookup_update (keys[i], slow_get_page_char))
             hits.hits_lfu++;
     }
+
+    hits.hits_perfect = cache_perfect.lookup_update (keys, slow_get_page_char);
 
     return hits;
 }

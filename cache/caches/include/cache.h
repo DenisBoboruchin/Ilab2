@@ -3,9 +3,11 @@
 #include <iostream>
 #include <list>
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include <cassert>
 #include <cstdio>
+#include <functional>
 
 namespace caches
 {
@@ -16,7 +18,8 @@ const int START_FREQ = 1;
 //--------------------------------------cache-type-LFU---------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-template <typename T, typename keyT = int> struct cache_lfu
+template <typename T, typename keyT = int>
+struct cache_lfu final
 {
 private:
     size_t capacity_ = 10;
@@ -131,68 +134,112 @@ public:
 //------------------------------------cache-type-perfect-------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
-template <typename T, typename keyT = int> struct cache_perfect
+template <typename T, typename keyT = int> 
+struct cache_perfect final
 {
 private:
     size_t capacity_ = 10;
     
+    using vectorItr = typename std::vector<keyT>::iterator;
+
     struct elem_
     {
         T page;
         keyT key;
-        int freq;
     };
 
-    std::list<elem_> cache_;
-    using listItr = typename std::list<elem_>::iterator;
+    std::map<vectorItr, elem_, std::greater<vectorItr>> cache_;
+    using cacheItr = typename std::map<vectorItr, elem_>::iterator;
 
-    std::unordered_map<keyT, listItr> hash_;
-    using hashItr = typename std::unordered_map<keyT, listItr>::iterator;
+    std::unordered_map<keyT, cacheItr> hash_;
+    using hashItr = typename std::unordered_map<keyT, cacheItr>::iterator; 
 
-    keyT find_useless_ (int num_check_key, std::vector<keyT> keys)
+    vectorItr check_utility_ (std::vector<keyT>& keys, vectorItr check_num_itr)
     {
-        int freq = 0;
-        int min_freq = 0;
-        int size = keys.size();
-        
-        keyT check_key = keys[num_check_key];
-        int count = 0;
+        keyT key = *check_num_itr;
 
-        for (int num_key = num_check_key + 1; (count != capacity_ + 1) && (num_key <= size); num_key++)
+        vectorItr count_itr = check_num_itr + 1;
+        vectorItr end = keys.end();
+
+        for (; count_itr != end; ++count_itr)
         {
-            keyT key = keys[num_key];
+            if (key == *count_itr)
+                return count_itr;
+        }
 
-            if (hash_.find (key) == hash_.end ())
-                continue;
-
-            count++;
-            if (check_key == key)
-                freq++;
-        } 
-
-        if (!freq)
-            return num_check_key;
+        return count_itr;
     }
 
-public:
     template <typename F>
-    bool lookup_update (int num_key, F slow_get_page, const std::vector<keyT>& keys)
+    void key_not_found (vectorItr check_num_itr, std::vector<keyT>& keys, F slow_get_page)
     {
-        hashItr hit = hash_.find (keys[num_key]);
-        if (hit == hash_.end())
-        {
-            keyT useless = find_useless_ (num_key, keys);
+        vectorItr num_next_activation = check_utility_ (keys, check_num_itr);
+        keyT key = *(check_num_itr);
 
-            return false;
+        if (num_next_activation == keys.end ())
+        {
+            if (check_full_ ())
+            {
+                vectorItr num_next_useless_activation = cache_.begin ()->first;
+                
+                if (num_next_useless_activation > num_next_activation)
+                {
+                    cacheItr erase = cache_.begin ();
+                    cache_.erase (erase);
+                    hash_.erase (erase->second.key);
+                }
+                else
+                    return;
+            }
+
+            elem_ add_elem {slow_get_page (key), key};
+            cache_[num_next_activation] =  add_elem;
+            hash_[key] = cache_.find (num_next_activation);
         }
-        
+    }
+
+    bool check_full_ ()
+    {
+        return (cache_.size () == capacity_);
+    }
+    
+public:
+    cache_perfect (size_t capacity): capacity_ {capacity} {};
+ 
+    template <typename F>
+    int lookup_update (std::vector<keyT>& keys, F slow_get_page)
+    {
+        vectorItr check_num_itr = keys.begin ();
+        vectorItr end_itr = keys.end ();
+
+        int hits = 0;
+        while (check_num_itr != end_itr)
+        {
+            keyT key = *(check_num_itr);
+
+            hashItr hit = hash_.find (key);
+    
+            if (hit != hash_.end ())
+            {
+
+                hits++;
+            }
+
+            else
+                key_not_found (check_num_itr, keys, slow_get_page);
+
+            check_num_itr++;
+        }
+
+        return hits;
     }
 };
 
 //-------------------------------------------------------------------------------------------------
 //--------------------------------------cache-type-LRU---------------------------------------------
 //-------------------------------------------------------------------------------------------------
-template <typename T, typename keyT = int> struct cache_lru 
+template <typename T, typename keyT = int> 
+struct cache_lru final
 {
 private:
     size_t capacity_ = 10;
