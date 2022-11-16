@@ -22,7 +22,7 @@ hits get_hits (std::string file_name)
         if (cache_lfu.lookup_update (keys[i], slow_get_page_char))
             hits.hits_lfu++;
     }
-
+    
     hits.hits_perfect = cache_perfect.lookup_update (keys, slow_get_page_char);
 
     return hits;

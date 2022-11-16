@@ -16,11 +16,12 @@ int main ()
     return RUN_ALL_TESTS();
 }
 
-/*
+#if 0
 TEST (all_cashes, test_from_cin)
 {
     hits hits = get_hits ();
-}*/
+}
+#endif
 
 TEST (all_caches, small_test_1)
 {

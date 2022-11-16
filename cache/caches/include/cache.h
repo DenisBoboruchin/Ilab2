@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CACHE_HPP
+#define CACHE_HPP
 
 #include <iostream>
 #include <list>
@@ -134,13 +135,12 @@ public:
 //------------------------------------cache-type-perfect-------------------------------------------
 //-------------------------------------------------------------------------------------------------
 
+#if 1
 template <typename T, typename keyT = int> 
 struct cache_perfect final
 {
 private:
     size_t capacity_ = 10;
-    
-    using vectorItr = typename std::vector<keyT>::iterator;
 
     struct elem_
     {
@@ -148,54 +148,31 @@ private:
         keyT key;
     };
 
-    std::map<vectorItr, elem_, std::greater<vectorItr>> cache_;
-    using cacheItr = typename std::map<vectorItr, elem_>::iterator;
+    std::map<int, elem_> cache_;
+    using cacheItr = typename std::map<int, elem_>::iterator;
 
-    std::unordered_map<keyT, cacheItr> hash_;
-    using hashItr = typename std::unordered_map<keyT, cacheItr>::iterator; 
+    std::vector<int> freq_use_;
+    
+    std::unordered_map<keyT, int> prev_use_hash_;
+    using prev_use_hashItr = typename std::unordered_map<keyT, int>::iterator; 
 
-    vectorItr check_utility_ (std::vector<keyT>& keys, vectorItr check_num_itr)
+    bool first_pass_keys (std::vector<keyT>& keys)
     {
-        keyT key = *check_num_itr;
-
-        vectorItr count_itr = check_num_itr + 1;
-        vectorItr end = keys.end();
-
-        for (; count_itr != end; ++count_itr)
+        for (int num_key = 0, end = keys.size (); num_key != end; ++num_key)
         {
-            if (key == *count_itr)
-                return count_itr;
-        }
+            keyT key = keys.at(num_key);
+            prev_use_hashItr check_prev = prev_use_hash_.find (key);
 
-        return count_itr;
-    }
-
-    template <typename F>
-    void key_not_found (vectorItr check_num_itr, std::vector<keyT>& keys, F slow_get_page)
-    {
-        vectorItr num_next_activation = check_utility_ (keys, check_num_itr);
-        keyT key = *(check_num_itr);
-
-        if (num_next_activation != keys.end ())
-        {
-            if (check_full_ ())
+            if (check_prev != prev_use_hash_.end ())
             {
-                vectorItr num_next_useless_activation = cache_.begin ()->first;
-                
-                if (num_next_useless_activation > num_next_activation)
-                {
-                    cacheItr erase = cache_.begin ();
-                    cache_.erase (erase);
-                    hash_.erase (erase->second.key);
-                }
-                else
-                    return;
+                int num_prev_use = check_prev->second;
+            
+                freq_use_.at (num_prev_use) = num_key - num_prev_use;
+                prev_use_hash_[key] = num_key;
             }
-
-            elem_ add_elem {slow_get_page (key), key};
-            cache_[num_next_activation] =  add_elem;
-            hash_[key] = cache_.find (num_next_activation);
         }
+
+        return true;
     }
 
     bool check_full_ ()
@@ -209,45 +186,11 @@ public:
     template <typename F>
     int lookup_update (std::vector<keyT>& keys, F slow_get_page)
     {
-        vectorItr check_num_itr = keys.begin ();
-        vectorItr end_itr = keys.end ();
-
-        int hits = 0;
-        while (check_num_itr != end_itr)
-        {
-            keyT key = *(check_num_itr);
-            hashItr hit = hash_.find (key);
-                
-            if (hit != hash_.end ())
-            {               
-                vectorItr num_next_activation = check_utility_ (keys, check_num_itr);
-                
-                cacheItr erase = hit->second;
-
-                elem_ elem = erase->second;
-                cache_.erase (erase);
-                
-                if (num_next_activation != keys.end ())
-                {    
-                    cache_[num_next_activation] = elem;
-                    hash_[key] = cache_.find (num_next_activation);   
-                }
-
-                else
-                    hash_.erase (key);
-                
-                hits++;
-            }
-
-            else
-                key_not_found (check_num_itr, keys, slow_get_page);
-
-            check_num_itr++;
-        }
-
-        return hits;
+        if (first_pass_keys (keys))
+            return 0;
     }
 };
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //--------------------------------------cache-type-LRU---------------------------------------------
@@ -319,3 +262,5 @@ public:
 };
 
 };
+
+#endif
