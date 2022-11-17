@@ -10,15 +10,12 @@
 #include <cstdio>
 #include <functional>
 #include <climits>
+#include <set>
 
 namespace caches
 {
     
-const int START_FREQ = 1;
-
-//-------------------------------------------------------------------------------------------------
-//--------------------------------------cache-type-LFU---------------------------------------------
-//-------------------------------------------------------------------------------------------------
+static const int START_FREQ = 1;
 
 template <typename T, typename keyT = int>
 struct cache_lfu final
@@ -132,11 +129,6 @@ public:
     }
 };  
 
-//-------------------------------------------------------------------------------------------------
-//------------------------------------cache-type-perfect-------------------------------------------
-//-------------------------------------------------------------------------------------------------
-
-#if 1
 template <typename T, typename keyT = int> 
 struct cache_perfect final
 {
@@ -149,8 +141,16 @@ private:
         keyT key;
     };
 
-    std::map<unsigned, elem_t, std::greater<unsigned>> cache_;
-    using cacheItr = typename std::map<unsigned, elem_t>::iterator;
+    struct comparator
+    {
+        bool operator () (const std::pair<unsigned, elem_t>& a, const std::pair<unsigned, elem_t>& b) const
+        {
+            return (a.first > b.first);
+        }
+    };
+    
+    std::multimap<unsigned, elem_t, std::greater<unsigned>> cache_;
+    using cacheItr = typename std::multimap<unsigned, elem_t, std::greater<unsigned>>::iterator;
     
     std::unordered_map<keyT, cacheItr> hash_;
 
@@ -196,47 +196,40 @@ public:
         for (unsigned num_key = 0, size = keys.size (); num_key != size; ++num_key)
         {
             keyT key = keys.at (num_key);
-            std::cout << "num key " << num_key << std::endl;
-
+           
             auto hit = hash_.find (key);
             if (hit == hash_.end ())
-            {
-                std::cout << "mimo\n";
+            {                   
+                unsigned to_next = to_next_use.at (num_key);
+                
                 if (check_full_ ())
                 {
                     cacheItr unusable_key_itr = cache_.begin ();
+                    if (unusable_key_itr->first < to_next)
+                        continue;
+
                     keyT unusable_key = unusable_key_itr->second.key;
                     
                     cache_.erase (unusable_key_itr);
                     hash_.erase (unusable_key);
                 }
 
-                unsigned to_next = to_next_use.at (num_key);
                 elem_t elem {slow_get_page (key), key};
-
-                auto [cache_itr, success] = cache_.insert ({to_next, elem});
-                hash_.insert ({key, cache_itr});
+                
+                auto res = cache_.insert ({to_next, elem});
+                hash_.insert ({key, res});
             }
 
             else
             {
                 cacheItr elem_itr = hit->second; 
 
-                //auto map_pair = cache_.extract (elem_itr);
-                //map_pair.key () = freq_use.at (num_key);
+                auto node_handle = cache_.extract (elem_itr);
+                node_handle.key () = to_next_use.at (num_key);
                 
-                //auto status = cache_.insert (std::move (map_pair));
-                //hash_[key] = status.position;
-
-                elem_t elem = elem_itr->second;
-                cache_.erase (elem_itr);
-                
-                auto [cache_itr, success] = cache_.insert ({to_next_use.at(num_key), elem});
-                
-                //hash_[key] = cache_itr;
-                hash_.erase (key);
-                hash_.insert ({key, cache_itr});    
-            
+                auto res = cache_.insert (std::move (node_handle));
+                hash_[key] = res;
+               
                 hits++;
             }
         }
@@ -244,11 +237,7 @@ public:
         return hits;
     }
 };
-#endif
 
-//-------------------------------------------------------------------------------------------------
-//--------------------------------------cache-type-LRU---------------------------------------------
-//-------------------------------------------------------------------------------------------------
 template <typename T, typename keyT = int> 
 struct cache_lru final
 {
