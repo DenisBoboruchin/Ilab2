@@ -9,6 +9,7 @@
 #include <cassert>
 #include <cstdio>
 #include <functional>
+#include <climits>
 
 namespace caches
 {
@@ -142,37 +143,40 @@ struct cache_perfect final
 private:
     size_t capacity_ = 10;
 
-    struct elem_
+    struct elem_t
     {
         T page;
         keyT key;
     };
 
-    std::map<int, elem_> cache_;
-    using cacheItr = typename std::map<int, elem_>::iterator;
-
-    std::vector<int> freq_use_;
+    std::map<unsigned, elem_t, std::greater<unsigned>> cache_;
+    using cacheItr = typename std::map<unsigned, elem_t>::iterator;
     
-    std::unordered_map<keyT, int> prev_use_hash_;
-    using prev_use_hashItr = typename std::unordered_map<keyT, int>::iterator; 
+    std::unordered_map<keyT, cacheItr> hash_;
 
-    bool first_pass_keys (std::vector<keyT>& keys)
+    std::unordered_map<keyT, unsigned> prev_use_hash_;
+    using prev_use_hashItr = typename std::unordered_map<keyT, unsigned>::iterator; 
+
+    std::vector<unsigned> first_pass_keys_ (std::vector<keyT>& keys)
     {
-        for (int num_key = 0, end = keys.size (); num_key != end; ++num_key)
+        std::vector<unsigned> freq_use (keys.size (), UINT_MAX);
+
+        for (unsigned num_key = 0, size = keys.size (); num_key != size; ++num_key)
         {
             keyT key = keys.at(num_key);
             prev_use_hashItr check_prev = prev_use_hash_.find (key);
 
             if (check_prev != prev_use_hash_.end ())
             {
-                int num_prev_use = check_prev->second;
+                unsigned num_prev_use = check_prev->second;
             
-                freq_use_.at (num_prev_use) = num_key - num_prev_use;
-                prev_use_hash_[key] = num_key;
+                freq_use.at (num_prev_use) = num_key - num_prev_use;
             }
+
+            prev_use_hash_[key] = num_key;
         }
 
-        return true;
+        return freq_use;
     }
 
     bool check_full_ ()
@@ -186,8 +190,58 @@ public:
     template <typename F>
     int lookup_update (std::vector<keyT>& keys, F slow_get_page)
     {
-        if (first_pass_keys (keys))
-            return 0;
+        std::vector<unsigned> to_next_use = first_pass_keys_ (keys);
+
+        int hits = 0;
+        for (unsigned num_key = 0, size = keys.size (); num_key != size; ++num_key)
+        {
+            keyT key = keys.at (num_key);
+            std::cout << "num key " << num_key << std::endl;
+
+            auto hit = hash_.find (key);
+            if (hit == hash_.end ())
+            {
+                std::cout << "mimo\n";
+                if (check_full_ ())
+                {
+                    cacheItr unusable_key_itr = cache_.begin ();
+                    keyT unusable_key = unusable_key_itr->second.key;
+                    
+                    cache_.erase (unusable_key_itr);
+                    hash_.erase (unusable_key);
+                }
+
+                unsigned to_next = to_next_use.at (num_key);
+                elem_t elem {slow_get_page (key), key};
+
+                auto [cache_itr, success] = cache_.insert ({to_next, elem});
+                hash_.insert ({key, cache_itr});
+            }
+
+            else
+            {
+                cacheItr elem_itr = hit->second; 
+
+                //auto map_pair = cache_.extract (elem_itr);
+                //map_pair.key () = freq_use.at (num_key);
+                
+                //auto status = cache_.insert (std::move (map_pair));
+                //hash_[key] = status.position;
+
+                elem_t elem = elem_itr->second;
+                cache_.erase (elem_itr);
+                
+                auto [cache_itr, success] = cache_.insert ({to_next_use.at(num_key), elem});
+                
+                //hash_[key] = cache_itr;
+                hash_.erase (key);
+                hash_.insert ({key, cache_itr});    
+            
+                hits++;
+            }
+        }
+
+        return hits;
     }
 };
 #endif
@@ -251,7 +305,6 @@ public:
 
             return false;
         }
-
 
         listItr page_itr = hash_itr_page->second;
         if (page_itr != cache_.begin ())
