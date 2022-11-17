@@ -14,9 +14,6 @@
 
 namespace caches
 {
-    
-static const int START_FREQ = 1;
-
 template <typename T, typename keyT = int>
 struct cache_lfu final
 {
@@ -24,7 +21,8 @@ private:
     size_t capacity_ = 10;
 
     size_t size_ = 0;   
-       
+ 
+    static constexpr int START_FREQ = 1;
     struct elem_;
     using listsItr = typename std::list<std::pair<int, std::list<elem_>>>::iterator;
 
@@ -141,14 +139,6 @@ private:
         keyT key;
     };
 
-    struct comparator
-    {
-        bool operator () (const std::pair<unsigned, elem_t>& a, const std::pair<unsigned, elem_t>& b) const
-        {
-            return (a.first > b.first);
-        }
-    };
-    
     std::multimap<unsigned, elem_t, std::greater<unsigned>> cache_;
     using cacheItr = typename std::multimap<unsigned, elem_t, std::greater<unsigned>>::iterator;
     
