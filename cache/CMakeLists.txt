@@ -22,8 +22,7 @@ if (TESTING)
     include_directories (${GTEST_INCLUDE_DIRS})
     
     add_executable (${PROJECT_NAME}_tests ${SOURCE_TEST})
-    target_link_libraries (${PROJECT_NAME}_tests PUBLIC GTest::GTest GTest::Main parser)
-    add_dependencies (${PROJECT_NAME}_tests parser)
+    target_link_libraries (${PROJECT_NAME}_tests PRIVATE GTest::GTest GTest::Main parser)
 
     add_custom_target (run_${PROJECT_NAME}_tests 
         COMMENT "Running ${PROJECT_NAME}_tests"    
