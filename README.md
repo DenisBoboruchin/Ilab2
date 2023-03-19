@@ -1,5 +1,5 @@
-course "Uses and applications of C++ language" by K.I.Vladimirov
-===
+"Uses and applications of C++ language" by K.I.Vladimirov
+---
 
 course assignments
 ===
