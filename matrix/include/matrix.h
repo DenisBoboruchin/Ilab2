@@ -5,8 +5,12 @@
 
 #include "vector.h"
 
-namespace Matrix {
+namespace matrix {
 
+template <typename T>
+class matrix final {
 }
+
+}  // namespace matrix
 
 #endif
