@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <sstream>
 
 #include "parser.h"
 
@@ -38,7 +39,11 @@ std::vector<int> read_keys(const std::string &file_name)
     int num_keys = 0;
     std::vector<int> keys;
 
-    std::ifstream input(file_name);
+    std::ifstream input_fstream(file_name);
+    std::stringstream input {};
+
+    input << input_fstream.rdbuf();
+    input_fstream.close();
 
     if (input) {
         input >> capacity;
@@ -51,8 +56,6 @@ std::vector<int> read_keys(const std::string &file_name)
 
             keys.push_back(key);
         }
-
-        input.close();
 
         return keys;
     }

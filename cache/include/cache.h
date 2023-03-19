@@ -36,6 +36,8 @@ private:
         listsItr lists_itr_;
     };
 
+    int delete_unusable_elem_();
+
     void cache_dump_() const;
 
 private:
@@ -58,19 +60,7 @@ bool cache_lfu<T, keyT>::lookup_update(const keyT key, const F slow_get_page)
     hashItr hit = hash_list_.find(key);
     if (hit == hash_list_.end()) {
         if (is_full()) {
-            listsItr unuse_pair_itr = lists_.begin();
-
-            listItr unuse_page_itr = --((unuse_pair_itr->second).end());
-            keyT unuse_key = unuse_page_itr->key_page_;
-
-            hash_list_.erase(unuse_key);
-            unuse_pair_itr->second.pop_back();
-
-            if (unuse_pair_itr->first != START_ELEMS_FREQ)
-                if (!unuse_pair_itr->second.size())
-                    lists_.pop_front();
-
-            size_--;
+            delete_unusable_elem_();
         }
 
         listsItr first_pair_itr = lists_.begin();
@@ -84,6 +74,7 @@ bool cache_lfu<T, keyT>::lookup_update(const keyT key, const F slow_get_page)
         hash_list_[key] = first_pair_itr->second.begin();
 
         size_++;
+
         return false;
     }
 
@@ -92,20 +83,48 @@ bool cache_lfu<T, keyT>::lookup_update(const keyT key, const F slow_get_page)
 
     listsItr itr_next_pair = std::next(itr_pair, 1);
 
-    if ((itr_next_pair == lists_.end()) || ((itr_next_pair)->first != itr_pair->first + 1))
+    if ((itr_next_pair == lists_.end()) || ((itr_next_pair)->first != itr_pair->first + 1)) {
         itr_next_pair = lists_.insert(itr_next_pair, {itr_pair->first + 1, std::list<elem_t> {}});
+    }
 
     std::list<elem_t> &list_elem = itr_next_pair->second;
 
     list_elem.splice(list_elem.begin(), itr_pair->second, itr_elem);
     itr_elem->lists_itr_ = itr_next_pair;
 
-    if (!itr_pair->second.size())
+    if (!itr_pair->second.size()) {
         lists_.erase(itr_pair);
+    }
 
     hash_list_[key] = list_elem.begin();
 
     return true;
+}
+
+template <typename T, typename keyT>
+int cache_lfu<T, keyT>::delete_unusable_elem_()
+{
+    if (capacity_ == 0) {
+        return 0;
+    }
+
+    listsItr unuse_pair_itr = lists_.begin();
+
+    listItr unuse_page_itr = std::prev((unuse_pair_itr->second).end(), 1);
+    keyT unuse_key = unuse_page_itr->key_page_;
+
+    hash_list_.erase(unuse_key);
+    unuse_pair_itr->second.pop_back();
+
+    if (unuse_pair_itr->first != START_ELEMS_FREQ) {
+        if (!unuse_pair_itr->second.size()) {
+            lists_.pop_front();
+        }
+    }
+
+    size_--;
+
+    return 1;
 }
 
 template <typename T, typename keyT>
@@ -184,8 +203,9 @@ int cache_perfect<T, keyT>::lookup_update(std::vector<keyT> &keys, F slow_get_pa
 
             if (is_full()) {
                 cacheItr unusable_key_itr = cache_.begin();
-                if (unusable_key_itr->first < to_next)
+                if (unusable_key_itr->first < to_next) {
                     continue;
+                }
 
                 keyT unusable_key = unusable_key_itr->second.key;
 
@@ -314,8 +334,7 @@ void cache_lru<T, keyT>::cache_dump_(void) const
 template <typename T, typename keyT>
 bool cache_lru<T, keyT>::is_full() const
 {
-    int csize = cache_.size();
-    return (csize == capacity_);
+    return (cache_.size() == capacity_);
 }
 
 }  // namespace caches
