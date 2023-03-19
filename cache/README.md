@@ -4,7 +4,10 @@ This project is the first task on course "Uses and applications of C++ language"
 
 Project structure
 ===
-3 cache algorithms were implemented: LFU, LRU and perfect.
+3 cache algorithms were implemented: 
+- LFU
+- LRU 
+- perfect
 
 Requirements
 ===
