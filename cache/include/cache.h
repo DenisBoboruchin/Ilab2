@@ -23,7 +23,7 @@ public:
     template <typename F>
     bool lookup_update(const keyT key, const F slow_get_page);
 
-    bool check_full() const;
+    bool is_full() const;
 
 private:
     struct elem_t;
@@ -57,7 +57,7 @@ bool cache_lfu<T, keyT>::lookup_update(const keyT key, const F slow_get_page)
 {
     hashItr hit = hash_list_.find(key);
     if (hit == hash_list_.end()) {
-        if (check_full()) {
+        if (is_full()) {
             listsItr unuse_pair_itr = lists_.begin();
 
             listItr unuse_page_itr = --((unuse_pair_itr->second).end());
@@ -128,7 +128,7 @@ void cache_lfu<T, keyT>::cache_dump_() const
 }
 
 template <typename T, typename keyT>
-bool cache_lfu<T, keyT>::check_full() const
+bool cache_lfu<T, keyT>::is_full() const
 {
     return size_ == capacity_;
 }
@@ -146,7 +146,7 @@ public:
     template <typename F>
     int lookup_update(std::vector<keyT> &keys, F slow_get_page);
 
-    bool check_full() const;
+    bool is_full() const;
 
 private:
     struct elem_t {
@@ -182,7 +182,7 @@ int cache_perfect<T, keyT>::lookup_update(std::vector<keyT> &keys, F slow_get_pa
         if (hit == hash_.end()) {
             unsigned to_next = to_next_use.at(num_key);
 
-            if (check_full()) {
+            if (is_full()) {
                 cacheItr unusable_key_itr = cache_.begin();
                 if (unusable_key_itr->first < to_next)
                     continue;
@@ -237,7 +237,7 @@ std::vector<unsigned> cache_perfect<T, keyT>::first_pass_keys_(std::vector<keyT>
 }
 
 template <typename T, typename keyT>
-bool cache_perfect<T, keyT>::check_full() const
+bool cache_perfect<T, keyT>::is_full() const
 {
     return (cache_.size() == capacity_);
 }
@@ -255,7 +255,7 @@ public:
     template <typename F>
     bool lookup_update(const keyT key, const F slow_get_page);
 
-    bool check_full() const;
+    bool is_full() const;
 
 private:
     void cache_dump_(void) const;
@@ -277,7 +277,7 @@ bool cache_lru<T, keyT>::lookup_update(const keyT key, const F slow_get_page)
     hashItr hash_itr_page = hash_.find(key);
 
     if (hash_itr_page == hash_.end()) {
-        if (check_full()) {
+        if (is_full()) {
             hash_.erase(cache_.back().second);
             cache_.pop_back();
         }
@@ -312,7 +312,7 @@ void cache_lru<T, keyT>::cache_dump_(void) const
 }
 
 template <typename T, typename keyT>
-bool cache_lru<T, keyT>::check_full() const
+bool cache_lru<T, keyT>::is_full() const
 {
     int csize = cache_.size();
     return (csize == capacity_);
