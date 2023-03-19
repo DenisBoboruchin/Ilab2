@@ -1,0 +1,11 @@
+/home/denis/prog/IlabCpp/matrix/build/CMakeFiles/matrix_tests.dir
+/home/denis/prog/IlabCpp/matrix/build/CMakeFiles/run_matrix_tests.dir
+/home/denis/prog/IlabCpp/matrix/build/CMakeFiles/clang_format.dir
+/home/denis/prog/IlabCpp/matrix/build/CMakeFiles/test.dir
+/home/denis/prog/IlabCpp/matrix/build/CMakeFiles/edit_cache.dir
+/home/denis/prog/IlabCpp/matrix/build/CMakeFiles/rebuild_cache.dir
+/home/denis/prog/IlabCpp/matrix/build/vector/CMakeFiles/vector_tests.dir
+/home/denis/prog/IlabCpp/matrix/build/vector/CMakeFiles/run_vector_tests.dir
+/home/denis/prog/IlabCpp/matrix/build/vector/CMakeFiles/test.dir
+/home/denis/prog/IlabCpp/matrix/build/vector/CMakeFiles/edit_cache.dir
+/home/denis/prog/IlabCpp/matrix/build/vector/CMakeFiles/rebuild_cache.dir

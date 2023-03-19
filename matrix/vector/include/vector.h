@@ -1,5 +1,5 @@
-#ifndef VECTOR_H_
-#define VECTOR_H_
+#ifndef VECTOR_H
+#define VECTOR_H
 
 #include <cassert>
 #include <cstdint>
@@ -10,7 +10,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace lab_07 {
+namespace my_containers {
 
 template <typename T, typename Alloc = std::allocator<T>>
 class vector {
@@ -20,22 +20,20 @@ class vector {
 
 public:
     vector() = default;
-    vector(size_t n, const T &value)
-        : capacity_(new_cap(n)), arr(All(capacity_)), size_(n) {
+    vector(size_t n, const T &value) : capacity_(new_cap(n)), arr(All(capacity_)), size_(n)
+    {
         for (std::size_t i = 0; i < size_; i++) {
             new (arr + i) T(value);
         }
     }
-    explicit vector(std::size_t n)
-        : capacity_(new_cap(n)), arr(All(capacity_)), size_(n) {
+    explicit vector(std::size_t n) : capacity_(new_cap(n)), arr(All(capacity_)), size_(n)
+    {
         for (std::size_t i = 0; i < size_; i++) {
             new (arr + i) T();
         }
     }
-    vector(const vector &other)
-        : capacity_(new_cap(other.size_)),
-          arr(All(capacity_)),
-          size_(other.size_) {
+    vector(const vector &other) : capacity_(new_cap(other.size_)), arr(All(capacity_)), size_(other.size_)
+    {
         for (std::size_t i = 0; i < size_; i++) {
             try {
                 new (arr + i) T(other.arr[i]);
@@ -49,11 +47,13 @@ public:
         }
     }
     vector(vector &&other) noexcept
-        : capacity_(std::exchange(other.capacity_, 0)),
-          arr(std::exchange(other.arr, nullptr)),
-          size_(std::exchange(other.size_, 0)) {
+        : capacity_(std::exchange(other.capacity_, 0))
+        , arr(std::exchange(other.arr, nullptr))
+        , size_(std::exchange(other.size_, 0))
+    {
     }
-    ~vector() noexcept {
+    ~vector() noexcept
+    {
         del(0, size_, arr);
         if (capacity_ != 0) {
             Alloc().deallocate(arr, capacity_);
@@ -61,7 +61,8 @@ public:
         size_ = 0;
         capacity_ = 0;
     }
-    vector &operator=(vector &&other) noexcept {
+    vector &operator=(vector &&other) noexcept
+    {
         if (this != &other) {
             if (capacity_ != 0) {
                 for (std::size_t i = 0; i < size_; i++) {
@@ -75,7 +76,8 @@ public:
         }
         return *this;
     }
-    vector &operator=(const vector &other) {
+    vector &operator=(const vector &other)
+    {
         if (this != &other) {
             std::size_t tmp_capacity_ = new_cap(other.size_);
             T *buf = All(tmp_capacity_);
@@ -102,43 +104,53 @@ public:
         }
         return *this;
     }
-    [[nodiscard]] std::size_t size() const noexcept {
+    [[nodiscard]] std::size_t size() const noexcept
+    {
         return size_;
     }
-    [[nodiscard]] bool empty() const noexcept {
+    [[nodiscard]] bool empty() const noexcept
+    {
         return size_ == 0;
     }
-    [[nodiscard]] std::size_t capacity() const noexcept {
+    [[nodiscard]] std::size_t capacity() const noexcept
+    {
         return capacity_;
     }
-    T &operator[](std::size_t n) &noexcept {
+    T &operator[](std::size_t n) &noexcept
+    {
         return arr[n];
     }
-    T &&operator[](std::size_t n) &&noexcept {
+    T &&operator[](std::size_t n) &&noexcept
+    {
         return std::move(arr[n]);
     }
-    const T &operator[](std::size_t n) const &noexcept {
+    const T &operator[](std::size_t n) const &noexcept
+    {
         return arr[n];
     }
-    T &at(std::size_t n) & {
+    T &at(std::size_t n) &
+    {
         if (n >= size_) {
             throw std::out_of_range("123");
         }
         return arr[n];
     }
-    T &&at(std::size_t n) && {
+    T &&at(std::size_t n) &&
+    {
         if (n >= size_) {
             throw std::out_of_range("123");
         }
         return std::move(arr[n]);
     }
-    const T &at(std::size_t n) const & {
+    const T &at(std::size_t n) const &
+    {
         if (n >= size_) {
             throw std::out_of_range("123");
         }
         return arr[n];
     }
-    void reserve(std::size_t n) & {
+    void reserve(std::size_t n) &
+    {
         if (capacity_ < n) {
             std::size_t new_capacity = new_cap(n);
             T *buf = All(new_capacity);
@@ -158,14 +170,16 @@ public:
             }
         }
     }
-    void push_back(const T &value) & {
+    void push_back(const T &value) &
+    {
         try {
             resize(size_ + 1, value);
         } catch (...) {
             throw;
         }
     }
-    void push_back(T &&value) & {
+    void push_back(T &&value) &
+    {
         if (size_ == capacity_) {
             if (capacity_ == 0) {
                 capacity_ = 2;
@@ -195,13 +209,15 @@ public:
         }
         size_++;
     }
-    void pop_back() & {
+    void pop_back() &
+    {
         if (0 == size_) {
             throw std::out_of_range("Vector size is smaller");
         }
         arr[--size_].~T();
     }
-    void resize(std::size_t n) & {
+    void resize(std::size_t n) &
+    {
         if (size_ < n) {
             std::size_t new_capacity = new_cap(n);
             T *buf = All(new_capacity);
@@ -228,7 +244,8 @@ public:
             size_ = n;
         }
     }
-    void resize(std::size_t n, const T &value) & {
+    void resize(std::size_t n, const T &value) &
+    {
         if (size_ < n) {
             std::size_t new_capacity = new_cap(n);
             T *buf = All(new_capacity);
@@ -255,7 +272,8 @@ public:
             size_ = n;
         }
     }
-    void clear() & {
+    void clear() &
+    {
         del(0, size_, arr);
         size_ = 0;
     }
@@ -264,7 +282,8 @@ private:
     std::size_t capacity_ = 0;
     T *arr = nullptr;
     std::size_t size_ = 0;
-    std::size_t new_cap(std::size_t x) {
+    std::size_t new_cap(std::size_t x)
+    {
         if (x == 0) {
             return 0;
         }
@@ -275,13 +294,15 @@ private:
         return y;
     }
 
-    void del(std::size_t i, std::size_t j, T *buf) noexcept {
+    void del(std::size_t i, std::size_t j, T *buf) noexcept
+    {
         for (std::size_t k = i; k < j; k++) {
             buf[k].~T();
         }
     }
 
-    T *All(std::size_t n) {
+    T *All(std::size_t n)
+    {
         if (n == 0) {
             return nullptr;
         }
@@ -289,6 +310,6 @@ private:
     }
 };
 
-}
+}  // namespace my_containers
 
 #endif
