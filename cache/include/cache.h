@@ -14,11 +14,6 @@ template <typename T, typename keyT = int>
 class cache_lfu final {
 public:
     cache_lfu(size_t capacity) : capacity_ {capacity} {};
-    cache_lfu(const cache_lfu &other) = default;
-    cache_lfu(cache_lfu &&other) = default;
-
-    cache_lfu &operator=(const cache_lfu &other) = default;
-    cache_lfu &operator=(cache_lfu &&other) = default;
 
     template <typename F>
     bool lookup_update(const keyT key, const F slow_get_page);
@@ -156,11 +151,6 @@ template <typename T, typename keyT = int>
 class cache_perfect final {
 public:
     cache_perfect(size_t capacity) : capacity_ {capacity} {};
-    cache_perfect(const cache_perfect &other) = default;
-    cache_perfect(cache_perfect &&other) = default;
-
-    cache_perfect &operator=(const cache_perfect &other) = default;
-    cache_perfect &operator=(cache_perfect &&other) = default;
 
     template <typename F>
     int lookup_update(std::vector<keyT> &keys, F slow_get_page);
@@ -266,11 +256,6 @@ template <typename T, typename keyT = int>
 class cache_lru final {
 public:
     cache_lru(size_t capacity) : capacity_ {capacity} {};
-    cache_lru(const cache_lru &other) = default;
-    cache_lru(cache_lru &&other) = default;
-
-    cache_lru &operator=(const cache_lru &other) = default;
-    cache_lru &operator=(cache_lru &&other) = default;
 
     template <typename F>
     bool lookup_update(const keyT key, const F slow_get_page);
