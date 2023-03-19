@@ -9,9 +9,9 @@ Project structure
 Requirements
 ===
 The following applications have to be installed:
--CMake 3.2 version (or higher)
--GTest
--g++
+- CMake 3.2 version (or higher)
+- GTest
+- g++
 
 How to build
 ===
