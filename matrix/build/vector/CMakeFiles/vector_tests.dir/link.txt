@@ -1,1 +1,0 @@
-g++ CMakeFiles/vector_tests.dir/tests/tests.cpp.o -o vector_tests  /usr/lib/x86_64-linux-gnu/libgtest_main.a /usr/lib/x86_64-linux-gnu/libgtest.a 

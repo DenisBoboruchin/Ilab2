@@ -1,1 +1,0 @@
-g++ -fsanitize=address -fsanitize=undefined CMakeFiles/matrix_tests.dir/tests/tests.cpp.o -o matrix_tests  /usr/lib/x86_64-linux-gnu/libgtest_main.a /usr/lib/x86_64-linux-gnu/libgtest.a 
