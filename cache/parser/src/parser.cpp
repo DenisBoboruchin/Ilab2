@@ -53,7 +53,6 @@ std::vector<int> read_keys(const std::string &file_name)
         for (int i = 1; i != num_keys + 1; i++) {
             int key = 0;
             input >> key;
-
             keys.push_back(key);
         }
 
