@@ -24,7 +24,9 @@ private:
     };
 
 public:
-    matrix(size_t num_rows = 0, size_t num_cols = 0, const T &value = {});
+
+    matrix(const size_t num_rows = 0, const size_t num_cols = 0, const T &value = {});
+
 
     size_t get_num_rows() const;
     size_t get_num_cols() const;
@@ -32,12 +34,20 @@ public:
     proxy_row_t operator[](size_t num_row) &;
     const const_proxy_row_t operator[](size_t num_row) const &;
 
+    void dump() const;
+
 private:
     my_containers::vector<row_t> data_;
 
     size_t num_rows_;
     size_t num_cols_;
 };
+
+template <typename T>
+matrix<T>::matrix(const size_t num_rows, const size_t num_cols, const T &value)
+    : data_ {num_rows, row_t {num_cols, value}}, num_rows_ {num_rows}, num_cols_ {num_cols}
+{
+}
 
 template <typename T>
 T &matrix<T>::proxy_row_t::operator[](size_t num_col)
@@ -63,14 +73,20 @@ template <typename T>
 const typename matrix<T>::const_proxy_row_t matrix<T>::operator[](size_t num_row) const &
 {
     const row_t &row = data_[num_row];
-    const const_proxy_row_t proxy_row {row};
+    const_proxy_row_t proxy_row {row};
     return proxy_row;
 }
 
 template <typename T>
-matrix<T>::matrix(size_t num_rows, size_t num_cols, const T &value)
-    : data_ {num_rows, row_t {num_cols, value}}, num_rows_ {num_rows}, num_cols_ {num_cols}
+void matrix<T>::dump() const
 {
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        for (int index_col = 0; index_col != num_cols_; ++index_col) {
+            std::cout << (data_.at(index_row)).at(index_col) << ' ';
+        }
+
+        std::cout << std::endl;
+    }
 }
 
 template <typename T>
