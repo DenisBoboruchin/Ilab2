@@ -52,7 +52,7 @@ public:
         , size_(std::exchange(other.size_, 0))
     {
     }
-    ~vector() noexcept
+    ~vector()
     {
         del(0, size_, arr);
         if (capacity_ != 0) {
@@ -209,12 +209,10 @@ public:
         }
         size_++;
     }
-    void pop_back() &
+    void pop_back() noexcept &
     {
-        if (0 == size_) {
-            throw std::out_of_range("Vector size is smaller");
-        }
-        arr[--size_].~T();
+        arr[size_].~T();
+        size_--;
     }
     void resize(std::size_t n) &
     {
