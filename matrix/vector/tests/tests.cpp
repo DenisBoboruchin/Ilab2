@@ -15,7 +15,8 @@ using std::vector;
 using my_containers::vector;
 #endif
 
-TEST(vector, Default_initialize) {
+TEST(vector, Default_initialize)
+{
     vector<std::string> x;
     ASSERT_TRUE(x.empty());
     ASSERT_TRUE(x.size() == 0);
@@ -24,7 +25,8 @@ TEST(vector, Default_initialize) {
     ASSERT_THROW(x.at(1), std::out_of_range);
 }
 
-TEST(vector, Default_copy_initialize) {
+TEST(vector, Default_copy_initialize)
+{
     vector<std::string> x = {};
     ASSERT_TRUE(x.empty());
     ASSERT_TRUE(x.size() == 0);
@@ -33,14 +35,16 @@ TEST(vector, Default_copy_initialize) {
     ASSERT_THROW(x.at(1), std::out_of_range);
 }
 
-TEST(vector, Constructor_from_size_t_is_explicit) {
+TEST(vector, Constructor_from_size_t_is_explicit)
+{
     bool is = std::is_constructible_v<vector<std::string>, std::size_t>;
     ASSERT_TRUE(is);
     is = std::is_convertible_v<std::size_t, vector<std::string>>;
     ASSERT_TRUE(!is);
 }
 
-TEST(vector, Constructor_from_is_implicit) {
+TEST(vector, Constructor_from_is_implicit)
+{
     // For compatibility with std::vector<>.
     vector<std::string> vec = {5, std::string("hi")};
     ASSERT_TRUE(vec.size() == 5);
@@ -66,16 +70,14 @@ struct MinimalObj {
 struct ObjWithDefaultCtor : MinimalObj {
     using MinimalObj::MinimalObj;
 
-    explicit ObjWithDefaultCtor() : MinimalObj(100) {
-    }
+    explicit ObjWithDefaultCtor() : MinimalObj(100) {}
 };
 static_assert(std::is_default_constructible_v<ObjWithDefaultCtor>);
 
 struct ObjWithCopyCtor : MinimalObj {
     using MinimalObj::MinimalObj;
 
-    ObjWithCopyCtor(const ObjWithCopyCtor &other) : MinimalObj(other.id) {
-    }
+    ObjWithCopyCtor(const ObjWithCopyCtor &other) : MinimalObj(other.id) {}
     ObjWithCopyCtor &operator=(const ObjWithCopyCtor &) = delete;
 
     ObjWithCopyCtor(ObjWithCopyCtor &&) = default;
@@ -87,10 +89,9 @@ struct ObjWithCopyCtor : MinimalObj {
 struct ObjWithCopyAssignment : MinimalObj {
     using MinimalObj::MinimalObj;
 
-    ObjWithCopyAssignment(const ObjWithCopyAssignment &other)
-        : MinimalObj(other.id) {
-    }
-    ObjWithCopyAssignment &operator=(const ObjWithCopyAssignment &other) {
+    ObjWithCopyAssignment(const ObjWithCopyAssignment &other) : MinimalObj(other.id) {}
+    ObjWithCopyAssignment &operator=(const ObjWithCopyAssignment &other)
+    {
         id = other.id;
         return *this;
     }
@@ -101,8 +102,8 @@ struct ObjWithCopyAssignment : MinimalObj {
     ~ObjWithCopyAssignment() = default;
 };
 
-TEST(vector, Construct_empty) {
-
+TEST(vector, Construct_empty)
+{
     vector<MinimalObj> v;
 
     ASSERT_TRUE(v.empty());
@@ -110,10 +111,10 @@ TEST(vector, Construct_empty) {
     vector<MinimalObj> vv = {};
 
     ASSERT_TRUE(vv.empty());
-
 }
 
-TEST(vector, Construct_zero_elements) {
+TEST(vector, Construct_zero_elements)
+{
     vector<ObjWithDefaultCtor> v(0);
     ASSERT_TRUE(v.empty());
     ASSERT_TRUE(v.size() == 0);
@@ -122,7 +123,8 @@ TEST(vector, Construct_zero_elements) {
 #endif
 }
 
-TEST(vector, Construct_n_elements_and_read) {
+TEST(vector, Construct_n_elements_and_read)
+{
     vector<ObjWithDefaultCtor> v(5);
 
     ASSERT_TRUE(!v.empty());
@@ -138,7 +140,8 @@ TEST(vector, Construct_n_elements_and_read) {
     ASSERT_TRUE(v[4].id == 100);
 }
 
-TEST(vector, Construct_n_copies_elements_and_read) {
+TEST(vector, Construct_n_copies_elements_and_read)
+{
     const ObjWithCopyCtor obj(10);
     vector<ObjWithCopyCtor> v(5, obj);
 
@@ -155,7 +158,8 @@ TEST(vector, Construct_n_copies_elements_and_read) {
     ASSERT_TRUE(v[4].id == 10);
 }
 
-TEST(vector, push_back_moves) {
+TEST(vector, push_back_moves)
+{
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -175,7 +179,8 @@ TEST(vector, push_back_moves) {
     ASSERT_TRUE(v[4].id == 14);
 }
 
-TEST(vector, push_back_copies) {
+TEST(vector, push_back_copies)
+{
     vector<ObjWithCopyCtor> v;
     const ObjWithCopyCtor obj(10);
     v.push_back(obj);
@@ -192,7 +197,8 @@ TEST(vector, push_back_copies) {
     ASSERT_TRUE(v[2].id == 10);
 }
 
-TEST(vector, Copy_construct) {
+TEST(vector, Copy_construct)
+{
     vector<ObjWithCopyCtor> orig;
     orig.push_back(ObjWithCopyCtor(10));
     orig.push_back(ObjWithCopyCtor(11));
@@ -225,7 +231,8 @@ TEST(vector, Copy_construct) {
 #endif
 }
 
-TEST(vector, Copy_assign) {
+TEST(vector, Copy_assign)
+{
     vector<ObjWithCopyAssignment> orig;
     orig.push_back(ObjWithCopyAssignment(10));
     orig.push_back(ObjWithCopyAssignment(11));
@@ -285,7 +292,8 @@ TEST(vector, Copy_assign) {
 #endif
 }
 
-TEST(vector, Move_construct) {
+TEST(vector, Move_construct)
+{
     vector<MinimalObj> orig;
     orig.push_back(MinimalObj(10));
     orig.push_back(MinimalObj(11));
@@ -318,7 +326,8 @@ TEST(vector, Move_construct) {
     ASSERT_TRUE(orig.capacity() == 0);
 }
 
-TEST(vector, Move_assign) {
+TEST(vector, Move_assign)
+{
     vector<MinimalObj> orig;
     orig.push_back(MinimalObj(10));
     orig.push_back(MinimalObj(11));
@@ -328,37 +337,36 @@ TEST(vector, Move_assign) {
 
     MinimalObj *orig_buf = &orig[0];
 
-    auto test_move_to_with_expected_capacity =
-        [&](vector<MinimalObj> &v,
-            [[maybe_unused]] std::size_t expected_capacity) {
-            ASSERT_TRUE(&(v = std::move(orig)) == &v);
+    auto test_move_to_with_expected_capacity = [&](vector<MinimalObj> &v,
+                                                   [[maybe_unused]] std::size_t expected_capacity) {
+        ASSERT_TRUE(&(v = std::move(orig)) == &v);
 
-            ASSERT_TRUE(!v.empty());
-            ASSERT_TRUE(v.size() == 5);
+        ASSERT_TRUE(!v.empty());
+        ASSERT_TRUE(v.size() == 5);
 #ifndef TEST_STD_VECTOR
-            ASSERT_TRUE(v.capacity() == 8);
+        ASSERT_TRUE(v.capacity() == 8);
 #endif
-            ASSERT_TRUE(v[0].id == 10);
-            ASSERT_TRUE(v[1].id == 11);
-            ASSERT_TRUE(v[2].id == 12);
-            ASSERT_TRUE(v[3].id == 13);
-            ASSERT_TRUE(v[4].id == 14);
+        ASSERT_TRUE(v[0].id == 10);
+        ASSERT_TRUE(v[1].id == 11);
+        ASSERT_TRUE(v[2].id == 12);
+        ASSERT_TRUE(v[3].id == 13);
+        ASSERT_TRUE(v[4].id == 14);
 
-            // Ensure there were no extra copies.
-            ASSERT_TRUE(&v[0] == orig_buf);
+        // Ensure there were no extra copies.
+        ASSERT_TRUE(&v[0] == orig_buf);
 
-            // NOLINTNEXTLINE(bugprone-use-after-move)
-            ASSERT_TRUE(orig.empty());
-            // NOLINTNEXTLINE(bugprone-use-after-move)
-            ASSERT_TRUE(orig.size() == 0);
+        // NOLINTNEXTLINE(bugprone-use-after-move)
+        ASSERT_TRUE(orig.empty());
+        // NOLINTNEXTLINE(bugprone-use-after-move)
+        ASSERT_TRUE(orig.size() == 0);
 #ifndef TEST_STD_VECTOR
-            // NOLINTNEXTLINE(bugprone-use-after-move)
-            ASSERT_TRUE(orig.capacity() == expected_capacity);
+        // NOLINTNEXTLINE(bugprone-use-after-move)
+        ASSERT_TRUE(orig.capacity() == expected_capacity);
 #endif
-        };
-/*
-    vector<MinimalObj> v;
-    test_move_to_with_expected_capacity(v, 0);*/
+    };
+    /*
+        vector<MinimalObj> v;
+        test_move_to_with_expected_capacity(v, 0);*/
 
     vector<MinimalObj> v2;
     v2.push_back(MinimalObj(100));
@@ -374,10 +382,11 @@ TEST(vector, Move_assign) {
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-        // No further checks on the state.
+    // No further checks on the state.
 }
 
-TEST(vector, Elements_are_consecutive) {
+TEST(vector, Elements_are_consecutive)
+{
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -391,7 +400,8 @@ TEST(vector, Elements_are_consecutive) {
     ASSERT_TRUE(&v[0] + 4 == &v[4]);
 }
 
-TEST(vector, Write_to_non_const) {
+TEST(vector, Write_to_non_const)
+{
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -411,7 +421,8 @@ TEST(vector, Write_to_non_const) {
     ASSERT_THROW(v.at(1'000'000'000), std::out_of_range);
 }
 
-TEST(vector, Read_from_const) {
+TEST(vector, Read_from_const)
+{
     vector<MinimalObj> orig;
     orig.push_back(MinimalObj(10));
     orig.push_back(MinimalObj(11));
@@ -431,7 +442,8 @@ TEST(vector, Read_from_const) {
     ASSERT_THROW(v.at(1'000'000'000), std::out_of_range);
 }
 
-TEST(vector, reserve) {
+TEST(vector, reserve)
+{
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -439,28 +451,24 @@ TEST(vector, reserve) {
     v.push_back(MinimalObj(13));
     v.push_back(MinimalObj(14));
 
-    auto check_vec_and_capacity =
-        [&v]([[maybe_unused]] std::size_t expected_capacity) {
-            ASSERT_TRUE(!v.empty());
-            ASSERT_TRUE(v.size() == 5);
+    auto check_vec_and_capacity = [&v]([[maybe_unused]] std::size_t expected_capacity) {
+        ASSERT_TRUE(!v.empty());
+        ASSERT_TRUE(v.size() == 5);
 #ifndef TEST_STD_VECTOR
-            ASSERT_TRUE(v.capacity() == expected_capacity);
+        ASSERT_TRUE(v.capacity() == expected_capacity);
 #endif
-            ASSERT_TRUE(v[0].id == 10);
-            ASSERT_TRUE(v[1].id == 11);
-            ASSERT_TRUE(v[2].id == 12);
-            ASSERT_TRUE(v[3].id == 13);
-            ASSERT_TRUE(v[4].id == 14);
-        };
-
+        ASSERT_TRUE(v[0].id == 10);
+        ASSERT_TRUE(v[1].id == 11);
+        ASSERT_TRUE(v[2].id == 12);
+        ASSERT_TRUE(v[3].id == 13);
+        ASSERT_TRUE(v[4].id == 14);
+    };
 
     v.reserve(5);
     check_vec_and_capacity(8);  // cppcheck-suppress invalidContainer
 
-
     v.reserve(1);
     check_vec_and_capacity(8);  // cppcheck-suppress invalidContainer
-
 
     v.reserve(8);
     check_vec_and_capacity(8);  // cppcheck-suppress invalidContainer
@@ -468,13 +476,12 @@ TEST(vector, reserve) {
     v.reserve(9);
     check_vec_and_capacity(16);  // cppcheck-suppress invalidContainer
 
-
     v.reserve(100);
     check_vec_and_capacity(128);  // cppcheck-suppress invalidContainer
-
 }
 
-TEST(vector, pop_back) {
+TEST(vector, pop_back)
+{
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -494,7 +501,8 @@ TEST(vector, pop_back) {
     ASSERT_TRUE(v[2].id == 12);
 }
 
-TEST(vector, pop_back_with_push_back) {
+TEST(vector, pop_back_with_push_back)
+{
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -527,7 +535,8 @@ TEST(vector, pop_back_with_push_back) {
 #endif
 }
 
-TEST(vector, clear) {
+TEST(vector, clear)
+{
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -543,14 +552,14 @@ TEST(vector, clear) {
 #endif
 }
 
-TEST(vector, resize_default_constructible) {
+TEST(vector, resize_default_constructible)
+{
     vector<ObjWithDefaultCtor> v;
     v.push_back(ObjWithDefaultCtor(10));
     v.push_back(ObjWithDefaultCtor(11));
     v.push_back(ObjWithDefaultCtor(12));
     v.push_back(ObjWithDefaultCtor(13));
     v.push_back(ObjWithDefaultCtor(14));
-
 
     v.resize(5);
 
@@ -564,7 +573,6 @@ TEST(vector, resize_default_constructible) {
     ASSERT_TRUE(v[2].id == 12);
     ASSERT_TRUE(v[3].id == 13);
     ASSERT_TRUE(v[4].id == 14);
-
 
     v.resize(3);
 
@@ -586,7 +594,8 @@ TEST(vector, resize_default_constructible) {
 #endif
 }
 
-TEST(vector, resize_with_copy) {
+TEST(vector, resize_with_copy)
+{
 #ifdef TEST_STD_VECTOR
     using Obj = ObjWithCopyAssignment;
 #else
@@ -612,7 +621,6 @@ TEST(vector, resize_with_copy) {
     ASSERT_TRUE(v[3].id == 13);
     ASSERT_TRUE(v[4].id == 14);
 
-
     v.resize(3, Obj(50));
 
     ASSERT_TRUE(!v.empty());
@@ -624,7 +632,6 @@ TEST(vector, resize_with_copy) {
     ASSERT_TRUE(v[1].id == 11);
     ASSERT_TRUE(v[2].id == 12);
 
-
     v.resize(0, Obj(50));
 
     ASSERT_TRUE(v.empty());
@@ -632,7 +639,6 @@ TEST(vector, resize_with_copy) {
 #ifndef TEST_STD_VECTOR
     ASSERT_TRUE(v.capacity() == 8);
 #endif
-
 
     v.resize(7, Obj(50));
 
@@ -642,8 +648,7 @@ TEST(vector, resize_with_copy) {
     ASSERT_TRUE(v.capacity() == 8);
 #endif
 
-    for (int i = 0; i < 7; ++i)
-    {
+    for (int i = 0; i < 7; ++i) {
         ASSERT_TRUE(v[i].id == 50);
     }
 
@@ -654,14 +659,13 @@ TEST(vector, resize_with_copy) {
 #ifndef TEST_STD_VECTOR
     ASSERT_TRUE(v.capacity() == 16);
 #endif
-    for (int i = 0; i < 9; ++i)
-    {
+    for (int i = 0; i < 9; ++i) {
         ASSERT_TRUE(v[i].id == 50);
     }
 }
 
-TEST(vector, 
-    push_back_copy_keeps_strong_exception_safety_even_for_capacity_when_reallocating) {
+TEST(vector, push_back_copy_keeps_strong_exception_safety_even_for_capacity_when_reallocating)
+{
     struct artificial_exception {};
     struct S {
         // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
@@ -671,13 +675,13 @@ TEST(vector,
         // Fun fact: until this field was here,
         // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96188 was triggered.
 
-        explicit S(bool can_copy_ = true) : can_copy(can_copy_) {
-        }
+        explicit S(bool can_copy_ = true) : can_copy(can_copy_) {}
 
         S(S &&) = default;
         S &operator=(S &&) = default;
 
-        S(const S &other) : can_copy(other.can_copy) {
+        S(const S &other) : can_copy(other.can_copy)
+        {
             if (!other.can_copy) {
                 throw artificial_exception();
             }
@@ -709,19 +713,19 @@ TEST(vector,
     ASSERT_TRUE(v[3].data == std::string(500U, 'x'));
 }
 
-TEST(vector, 
-    resize_keeps_strong_exception_safety_even_for_capacity_when_reallocating) {
+TEST(vector, resize_keeps_strong_exception_safety_even_for_capacity_when_reallocating)
+{
     struct artificial_exception {};
     struct S {
         // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
         std::string data = std::string(500U, 'x');
 
-        S() {
+        S()
+        {
             throw artificial_exception();
         }
 
-        explicit S(int) {
-        }
+        explicit S(int) {}
     };
 
     vector<S> v;
@@ -745,7 +749,8 @@ TEST(vector,
 }
 
 #ifndef TEST_STD_VECTOR
-TEST(vector, copy_assignment_keeps_strong_exception_safety) {
+TEST(vector, copy_assignment_keeps_strong_exception_safety)
+{
     struct artificial_exception {};
     struct S {
         // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
@@ -753,19 +758,20 @@ TEST(vector, copy_assignment_keeps_strong_exception_safety) {
         // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
         std::string data;
 
-        explicit S(std::string data_) : data(std::move(data_)) {
-        }
+        explicit S(std::string data_) : data(std::move(data_)) {}
 
         S(S &&) = default;
         S &operator=(S &&) = default;
 
-        S(const S &other) : can_copy(other.can_copy), data(other.data) {
+        S(const S &other) : can_copy(other.can_copy), data(other.data)
+        {
             if (!can_copy) {
                 throw artificial_exception();
             }
         }
 
-        S &operator=(const S &other) {
+        S &operator=(const S &other)
+        {
             can_copy = other.can_copy;
             data = other.data;
             if (!can_copy) {
@@ -798,22 +804,25 @@ TEST(vector, copy_assignment_keeps_strong_exception_safety) {
 }
 #endif
 
-TEST(vector, op_and_at_have_lvalue_or_rvalue_overloads) {
+TEST(vector, op_and_at_have_lvalue_or_rvalue_overloads)
+{
     struct TracingObj {
         // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
         int kind = 0;
 
         TracingObj() = default;
-        TracingObj(const TracingObj &) : kind(1) {
-        }
-        TracingObj(TracingObj &&other) noexcept : kind(2) {
+        TracingObj(const TracingObj &) : kind(1) {}
+        TracingObj(TracingObj &&other) noexcept : kind(2)
+        {
             other.kind = -2;
         }
-        TracingObj &operator=(const TracingObj &) {
+        TracingObj &operator=(const TracingObj &)
+        {
             kind = 3;
             return *this;
         }
-        TracingObj &operator=(TracingObj &&other) noexcept {
+        TracingObj &operator=(TracingObj &&other) noexcept
+        {
             kind = 4;
             other.kind = -4;
             return *this;
@@ -829,18 +838,15 @@ TEST(vector, op_and_at_have_lvalue_or_rvalue_overloads) {
     ASSERT_TRUE(o.kind == 1);
     ASSERT_TRUE(v[0].kind == 10);
 
-
     TracingObj o2 = v.at(0);
     ASSERT_TRUE(o2.kind == 1);
     ASSERT_TRUE(v[0].kind == 10);
-
 
 #ifndef TEST_STD_VECTOR
     TracingObj o3 = std::move(v)[0];
     ASSERT_TRUE(o3.kind == 2);
     // NOLINTNEXTLINE(bugprone-use-after-move)
     ASSERT_TRUE(v[0].kind == -2);
-
 
     TracingObj o4 = std::move(v).at(0);
     ASSERT_TRUE(o4.kind == 2);
@@ -850,8 +856,8 @@ TEST(vector, op_and_at_have_lvalue_or_rvalue_overloads) {
 #endif
 }
 
-TEST(vector, new_elements_are_value_initialized) {
-
+TEST(vector, new_elements_are_value_initialized)
+{
     for (int step = 0; step < 10; step++) {
         vector<int> vec(1000);
         for (std::size_t i = 0; i < vec.size(); i++) {
@@ -879,7 +885,6 @@ TEST(vector, new_elements_are_value_initialized) {
             vec[i] = 10;
         }
     }
-
 }
 
 namespace {
@@ -891,15 +896,15 @@ struct Counters {
 } global_counters;
 }  // namespace
 
-Counters operator-(const Counters &a, const Counters &b) {
-    return Counters{a.new_count - b.new_count,
-                    a.new_total_elems - b.new_total_elems,
-                    a.delete_count - b.delete_count,
-                    a.delete_total_elems - b.delete_total_elems};
+Counters operator-(const Counters &a, const Counters &b)
+{
+    return Counters {a.new_count - b.new_count, a.new_total_elems - b.new_total_elems, a.delete_count - b.delete_count,
+                     a.delete_total_elems - b.delete_total_elems};
 }
 
 template <typename Fn>
-Counters with_counters(Fn fn) {
+Counters with_counters(Fn fn)
+{
     Counters start = global_counters;
     fn();
     return global_counters - start;
@@ -912,14 +917,16 @@ struct CounterAllocator {
 
     using value_type = T;
 
-    T *allocate(std::size_t count) {
+    T *allocate(std::size_t count)
+    {
         T *result = static_cast<T *>(::operator new(count * sizeof(T)));
         global_counters.new_count++;
         global_counters.new_total_elems += count;
         return result;
     }
 
-    void deallocate(T *ptr, std::size_t count) noexcept {
+    void deallocate(T *ptr, std::size_t count) noexcept
+    {
         ASSERT_TRUE(ptr != nullptr);
         ASSERT_TRUE(count > 0);
         ::operator delete(ptr);
@@ -929,10 +936,11 @@ struct CounterAllocator {
 };
 }  // namespace
 
-TEST(vector, custom_allocator_is_used_by_vector_string) {
+TEST(vector, custom_allocator_is_used_by_vector_string)
+{
     Counters res = with_counters([]() {
         struct S {
-            char buf[40]{};
+            char buf[40] {};
         };
         vector<S, CounterAllocator<S>> vec_empty;
         vector<S, CounterAllocator<S>> vec(10);
