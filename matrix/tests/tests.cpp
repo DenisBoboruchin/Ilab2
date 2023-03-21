@@ -29,6 +29,7 @@ TEST(matrix, square_brackets)
     ASSERT_EQ(matrix.get_num_cols(), 2);
 
     ASSERT_EQ(matrix[1][1], 15);
+    ASSERT_EQ(matrix[4][1], 15);
 
     matrix[3][0] = 10;
     ASSERT_EQ(matrix[3][0], 10);

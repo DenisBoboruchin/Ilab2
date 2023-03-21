@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16.3 FATAL_ERROR)
 
 set(PROJECT_NAME matrix)
 project(${PROJECT_NAME} LANGUAGES CXX)
