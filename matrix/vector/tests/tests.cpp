@@ -6,22 +6,14 @@
 #include <string>
 #include <type_traits>
 #include <vector>
-#include "doctest.h"
 
 #ifdef TEST_STD_VECTOR
 using std::vector;
 #else
-using lab_07::vector;
+using my_containers::vector;
 #endif
 
-TEST_CASE(
-    "Default-initialize "
-#ifdef TEST_STD_VECTOR
-    "std::vector<std::string>"
-#else
-    "lab_07::vector<std::string>"
-#endif
-) {
+TEST(vector, Default_initialize) {
     vector<std::string> x;
     ASSERT_TRUE(x.empty());
     ASSERT_TRUE(x.size() == 0);
@@ -30,7 +22,7 @@ TEST_CASE(
     ASSERT_THROW(x.at(1), std::out_of_range);
 }
 
-TEST_CASE("Default-copy-initialize") {
+TEST(vector, Default_copy_initialize) {
     vector<std::string> x = {};
     ASSERT_TRUE(x.empty());
     ASSERT_TRUE(x.size() == 0);
@@ -39,12 +31,14 @@ TEST_CASE("Default-copy-initialize") {
     ASSERT_THROW(x.at(1), std::out_of_range);
 }
 
-TEST_CASE("Constructor from size_t is explicit") {
-    ASSERT_TRUE(std::is_constructible_v<vector<std::string>, std::size_t>);
-    ASSERT_TRUE(!std::is_convertible_v<std::size_t, vector<std::string>>);
+TEST(vector, Constructor_from_size_t_is_explicit) {
+    bool is = std::is_constructible_v<vector<std::string>, std::size_t>;
+    ASSERT_TRUE(is);
+    is = std::is_convertible_v<std::size_t, vector<std::string>>;
+    ASSERT_TRUE(!is);
 }
 
-TEST_CASE("Constructor from (size_t, T) is implicit (since C++11)") {
+TEST(vector, Constructor_from_is_implicit) {
     // For compatibility with std::vector<>.
     vector<std::string> vec = {5, std::string("hi")};
     ASSERT_TRUE(vec.size() == 5);
@@ -57,9 +51,7 @@ struct MinimalObj {
     // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
     std::string data = std::string(500U, 'x');
 
-    explicit MinimalObj(int id_) : id(id_) {
-        ASSERT_TRUE(data.size() == 500U);
-    }
+    explicit MinimalObj(int id_) : id(id_) {}
     MinimalObj(MinimalObj &&) = default;
     MinimalObj &operator=(MinimalObj &&) = default;
 
@@ -107,21 +99,19 @@ struct ObjWithCopyAssignment : MinimalObj {
     ~ObjWithCopyAssignment() = default;
 };
 
-TEST_CASE("Construct empty") {
-    SUBCASE("explicit") {
-        vector<MinimalObj> v;
+TEST(vector, Construct_empty) {
 
-        ASSERT_TRUE(v.empty());
-    }
+    vector<MinimalObj> v;
 
-    SUBCASE("implicit") {
-        vector<MinimalObj> v = {};
+    ASSERT_TRUE(v.empty());
 
-        ASSERT_TRUE(v.empty());
-    }
+    vector<MinimalObj> vv = {};
+
+    ASSERT_TRUE(vv.empty());
+
 }
 
-TEST_CASE("Construct zero elements") {
+TEST(vector, Construct_zero_elements) {
     vector<ObjWithDefaultCtor> v(0);
     ASSERT_TRUE(v.empty());
     ASSERT_TRUE(v.size() == 0);
@@ -130,7 +120,7 @@ TEST_CASE("Construct zero elements") {
 #endif
 }
 
-TEST_CASE("Construct n elements and read") {
+TEST(vector, Construct_n_elements_and_read) {
     vector<ObjWithDefaultCtor> v(5);
 
     ASSERT_TRUE(!v.empty());
@@ -146,7 +136,7 @@ TEST_CASE("Construct n elements and read") {
     ASSERT_TRUE(v[4].id == 100);
 }
 
-TEST_CASE("Construct n copies elements and read") {
+TEST(vector, Construct_n_copies_elements_and_read) {
     const ObjWithCopyCtor obj(10);
     vector<ObjWithCopyCtor> v(5, obj);
 
@@ -163,7 +153,7 @@ TEST_CASE("Construct n copies elements and read") {
     ASSERT_TRUE(v[4].id == 10);
 }
 
-TEST_CASE("push_back moves") {
+TEST(vector, push_back_moves) {
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -183,7 +173,7 @@ TEST_CASE("push_back moves") {
     ASSERT_TRUE(v[4].id == 14);
 }
 
-TEST_CASE("push_back copies") {
+TEST(vector, push_back_copies) {
     vector<ObjWithCopyCtor> v;
     const ObjWithCopyCtor obj(10);
     v.push_back(obj);
@@ -200,7 +190,7 @@ TEST_CASE("push_back copies") {
     ASSERT_TRUE(v[2].id == 10);
 }
 
-TEST_CASE("Copy-construct") {
+TEST(vector, Copy_construct) {
     vector<ObjWithCopyCtor> orig;
     orig.push_back(ObjWithCopyCtor(10));
     orig.push_back(ObjWithCopyCtor(11));
@@ -223,10 +213,8 @@ TEST_CASE("Copy-construct") {
     // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
     vector<ObjWithCopyCtor> v = orig_const;
 
-    INFO("target");
     check_vec(v);
 
-    INFO("origin");
     check_vec(orig);
 
 #ifndef TEST_STD_VECTOR
@@ -235,7 +223,7 @@ TEST_CASE("Copy-construct") {
 #endif
 }
 
-TEST_CASE("Copy-assign") {
+TEST(vector, Copy_assign) {
     vector<ObjWithCopyAssignment> orig;
     orig.push_back(ObjWithCopyAssignment(10));
     orig.push_back(ObjWithCopyAssignment(11));
@@ -257,54 +245,45 @@ TEST_CASE("Copy-assign") {
     auto test_copy_to = [&](vector<ObjWithCopyAssignment> &v) {
         const auto &orig_const = orig;
         ASSERT_TRUE(&(v = orig_const) == &v);
-        INFO("target");
+
         check_vec(v);
-        INFO("origin");
         check_vec(orig);
     };
 
-    SUBCASE("to empty") {
-        vector<ObjWithCopyAssignment> v;
-        test_copy_to(v);
+    vector<ObjWithCopyAssignment> v;
+    test_copy_to(v);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(orig.capacity() == 8);
-        ASSERT_TRUE(v.capacity() == 4);
+    ASSERT_TRUE(orig.capacity() == 8);
+    ASSERT_TRUE(v.capacity() == 4);
 #endif
-    }
 
-    SUBCASE("to shorter non-empty") {
-        vector<ObjWithCopyAssignment> v(3, ObjWithCopyAssignment(20));
-        test_copy_to(v);
+    vector<ObjWithCopyAssignment> v2(3, ObjWithCopyAssignment(20));
+    test_copy_to(v2);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(orig.capacity() == 8);
-        ASSERT_TRUE(v.capacity() == 4);
+    ASSERT_TRUE(orig.capacity() == 8);
+    ASSERT_TRUE(v2.capacity() == 4);
 #endif
-    }
 
-    SUBCASE("to longer non-empty") {
-        vector<ObjWithCopyAssignment> v(7, ObjWithCopyAssignment(20));
-        test_copy_to(v);
+    vector<ObjWithCopyAssignment> v3(7, ObjWithCopyAssignment(20));
+    test_copy_to(v3);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(orig.capacity() == 8);
+    ASSERT_TRUE(orig.capacity() == 8);
 
-        // We have to re-create buffer to provide strong exception safety,
-        // hence we choose the minimal possible capacity.
-        ASSERT_TRUE(v.capacity() == 4);
+    // We have to re-create buffer to provide strong exception safety,
+    // hence we choose the minimal possible capacity.
+    ASSERT_TRUE(v3.capacity() == 4);
 #endif
-    }
 
-    SUBCASE("to self") {
-        ObjWithCopyAssignment *orig_buf = &orig[0];
-        test_copy_to(orig);
-        // Ensure there were no extra copies.
-        ASSERT_TRUE(&orig[0] == orig_buf);
+    ObjWithCopyAssignment *orig_buf = &orig[0];
+    test_copy_to(orig);
+    // Ensure there were no extra copies.
+    ASSERT_TRUE(&orig[0] == orig_buf);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(orig.capacity() == 8);
+    ASSERT_TRUE(orig.capacity() == 8);
 #endif
-    }
 }
 
-TEST_CASE("Move-construct") {
+TEST(vector, Move_construct) {
     vector<MinimalObj> orig;
     orig.push_back(MinimalObj(10));
     orig.push_back(MinimalObj(11));
@@ -337,7 +316,7 @@ TEST_CASE("Move-construct") {
     ASSERT_TRUE(orig.capacity() == 0);
 }
 
-TEST_CASE("Move-assign") {
+TEST(vector, Move_assign) {
     vector<MinimalObj> orig;
     orig.push_back(MinimalObj(10));
     orig.push_back(MinimalObj(11));
@@ -376,33 +355,27 @@ TEST_CASE("Move-assign") {
 #endif
         };
 
-    SUBCASE("to empty") {
-        vector<MinimalObj> v;
-        test_move_to_with_expected_capacity(v, 0);
-    };
+    vector<MinimalObj> v;
+    test_move_to_with_expected_capacity(v, 0);
 
-    SUBCASE("to non-empty") {
-        vector<MinimalObj> v;
-        v.push_back(MinimalObj(100));
-        v.push_back(MinimalObj(101));
-        v.push_back(MinimalObj(102));
-        test_move_to_with_expected_capacity(v, 4);
-    };
+    vector<MinimalObj> v2;
+    v2.push_back(MinimalObj(100));
+    v2.push_back(MinimalObj(101));
+    v2.push_back(MinimalObj(102));
+    test_move_to_with_expected_capacity(v2, 4);
 
-    SUBCASE("to self") {
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wself-move"
 #endif
-        orig = std::move(orig);
+    orig = std::move(orig);
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
         // No further checks on the state.
-    };
 }
 
-TEST_CASE("Elements are consecutive") {
+TEST(vector, Elements_are_consecutive) {
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -416,7 +389,7 @@ TEST_CASE("Elements are consecutive") {
     ASSERT_TRUE(&v[0] + 4 == &v[4]);
 }
 
-TEST_CASE("Write to non-const") {
+TEST(vector, Write_to_non_const) {
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -436,7 +409,7 @@ TEST_CASE("Write to non-const") {
     ASSERT_THROW(v.at(1'000'000'000), std::out_of_range);
 }
 
-TEST_CASE("Read from const") {
+TEST(vector, Read_from_const) {
     vector<MinimalObj> orig;
     orig.push_back(MinimalObj(10));
     orig.push_back(MinimalObj(11));
@@ -456,7 +429,7 @@ TEST_CASE("Read from const") {
     ASSERT_THROW(v.at(1'000'000'000), std::out_of_range);
 }
 
-TEST_CASE("reserve") {
+TEST(vector, reserve) {
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -478,33 +451,28 @@ TEST_CASE("reserve") {
             ASSERT_TRUE(v[4].id == 14);
         };
 
-    SUBCASE("reserve to size") {
-        v.reserve(5);
-        check_vec_and_capacity(8);  // cppcheck-suppress invalidContainer
-    }
 
-    SUBCASE("reserve decreases") {
-        v.reserve(1);
-        check_vec_and_capacity(8);  // cppcheck-suppress invalidContainer
-    }
+    v.reserve(5);
+    check_vec_and_capacity(8);  // cppcheck-suppress invalidContainer
 
-    SUBCASE("reserve to capacity") {
-        v.reserve(8);
-        check_vec_and_capacity(8);  // cppcheck-suppress invalidContainer
-    }
 
-    SUBCASE("reserve bigger than capacity") {
-        v.reserve(9);
-        check_vec_and_capacity(16);  // cppcheck-suppress invalidContainer
-    }
+    v.reserve(1);
+    check_vec_and_capacity(8);  // cppcheck-suppress invalidContainer
 
-    SUBCASE("reserve much bigger than capacity") {
-        v.reserve(100);
-        check_vec_and_capacity(128);  // cppcheck-suppress invalidContainer
-    }
+
+    v.reserve(8);
+    check_vec_and_capacity(8);  // cppcheck-suppress invalidContainer
+
+    v.reserve(9);
+    check_vec_and_capacity(16);  // cppcheck-suppress invalidContainer
+
+
+    v.reserve(100);
+    check_vec_and_capacity(128);  // cppcheck-suppress invalidContainer
+
 }
 
-TEST_CASE("pop_back") {
+TEST(vector, pop_back) {
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -524,7 +492,7 @@ TEST_CASE("pop_back") {
     ASSERT_TRUE(v[2].id == 12);
 }
 
-TEST_CASE("pop_back with push_back") {
+TEST(vector, pop_back_with_push_back) {
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -557,7 +525,7 @@ TEST_CASE("pop_back with push_back") {
 #endif
 }
 
-TEST_CASE("clear") {
+TEST(vector, clear) {
     vector<MinimalObj> v;
     v.push_back(MinimalObj(10));
     v.push_back(MinimalObj(11));
@@ -573,7 +541,7 @@ TEST_CASE("clear") {
 #endif
 }
 
-TEST_CASE("resize default constructible") {
+TEST(vector, resize_default_constructible) {
     vector<ObjWithDefaultCtor> v;
     v.push_back(ObjWithDefaultCtor(10));
     v.push_back(ObjWithDefaultCtor(11));
@@ -581,82 +549,75 @@ TEST_CASE("resize default constructible") {
     v.push_back(ObjWithDefaultCtor(13));
     v.push_back(ObjWithDefaultCtor(14));
 
-    SUBCASE("to size") {
-        v.resize(5);
 
-        ASSERT_TRUE(!v.empty());
-        ASSERT_TRUE(v.size() == 5);
+    v.resize(5);
+
+    ASSERT_TRUE(!v.empty());
+    ASSERT_TRUE(v.size() == 5);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(v.capacity() == 8);
+    ASSERT_TRUE(v.capacity() == 8);
 #endif
-        ASSERT_TRUE(v[0].id == 10);
-        ASSERT_TRUE(v[1].id == 11);
-        ASSERT_TRUE(v[2].id == 12);
-        ASSERT_TRUE(v[3].id == 13);
-        ASSERT_TRUE(v[4].id == 14);
-    }
+    ASSERT_TRUE(v[0].id == 10);
+    ASSERT_TRUE(v[1].id == 11);
+    ASSERT_TRUE(v[2].id == 12);
+    ASSERT_TRUE(v[3].id == 13);
+    ASSERT_TRUE(v[4].id == 14);
 
-    SUBCASE("to shorter") {
-        v.resize(3);
 
-        ASSERT_TRUE(!v.empty());
-        ASSERT_TRUE(v.size() == 3);
+    v.resize(3);
+
+    ASSERT_TRUE(!v.empty());
+    ASSERT_TRUE(v.size() == 3);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(v.capacity() == 8);
+    ASSERT_TRUE(v.capacity() == 8);
 #endif
-        ASSERT_TRUE(v[0].id == 10);
-        ASSERT_TRUE(v[1].id == 11);
-        ASSERT_TRUE(v[2].id == 12);
-    }
+    ASSERT_TRUE(v[0].id == 10);
+    ASSERT_TRUE(v[1].id == 11);
+    ASSERT_TRUE(v[2].id == 12);
 
-    SUBCASE("to zero") {
-        v.resize(0);
+    v.resize(0);
 
-        ASSERT_TRUE(v.empty());
-        ASSERT_TRUE(v.size() == 0);
+    ASSERT_TRUE(v.empty());
+    ASSERT_TRUE(v.size() == 0);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(v.capacity() == 8);
+    ASSERT_TRUE(v.capacity() == 8);
 #endif
-    }
 
-    SUBCASE("to longer without reallocation") {
-        v.resize(7);
+    v.resize(7);
 
-        ASSERT_TRUE(!v.empty());
-        ASSERT_TRUE(v.size() == 7);
+    ASSERT_TRUE(!v.empty());
+    ASSERT_TRUE(v.size() == 7);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(v.capacity() == 8);
+    ASSERT_TRUE(v.capacity() == 8);
 #endif
-        ASSERT_TRUE(v[0].id == 10);
-        ASSERT_TRUE(v[1].id == 11);
-        ASSERT_TRUE(v[2].id == 12);
-        ASSERT_TRUE(v[3].id == 13);
-        ASSERT_TRUE(v[4].id == 14);
-        ASSERT_TRUE(v[5].id == 100);
-        ASSERT_TRUE(v[6].id == 100);
-    }
+    ASSERT_TRUE(v[0].id == 10);
+    ASSERT_TRUE(v[1].id == 11);
+    ASSERT_TRUE(v[2].id == 12);
+    ASSERT_TRUE(v[3].id == 13);
+    ASSERT_TRUE(v[4].id == 14);
+    ASSERT_TRUE(v[5].id == 100);
+    ASSERT_TRUE(v[6].id == 100);
 
-    SUBCASE("to longer with reallocation") {
-        v.resize(9);
 
-        ASSERT_TRUE(!v.empty());
-        ASSERT_TRUE(v.size() == 9);
+    v.resize(9);
+
+    ASSERT_TRUE(!v.empty());
+    ASSERT_TRUE(v.size() == 9);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(v.capacity() == 16);
+    ASSERT_TRUE(v.capacity() == 16);
 #endif
-        ASSERT_TRUE(v[0].id == 10);
-        ASSERT_TRUE(v[1].id == 11);
-        ASSERT_TRUE(v[2].id == 12);
-        ASSERT_TRUE(v[3].id == 13);
-        ASSERT_TRUE(v[4].id == 14);
-        ASSERT_TRUE(v[5].id == 100);
-        ASSERT_TRUE(v[6].id == 100);
-        ASSERT_TRUE(v[7].id == 100);
-        ASSERT_TRUE(v[8].id == 100);
-    }
+    ASSERT_TRUE(v[0].id == 10);
+    ASSERT_TRUE(v[1].id == 11);
+    ASSERT_TRUE(v[2].id == 12);
+    ASSERT_TRUE(v[3].id == 13);
+    ASSERT_TRUE(v[4].id == 14);
+    ASSERT_TRUE(v[5].id == 100);
+    ASSERT_TRUE(v[6].id == 100);
+    ASSERT_TRUE(v[7].id == 100);
+    ASSERT_TRUE(v[8].id == 100);
 }
 
-TEST_CASE("resize with copy") {
+TEST(vector, resize_with_copy) {
 #ifdef TEST_STD_VECTOR
     using Obj = ObjWithCopyAssignment;
 #else
@@ -669,84 +630,77 @@ TEST_CASE("resize with copy") {
     v.push_back(Obj(13));
     v.push_back(Obj(14));
 
-    SUBCASE("to size") {
-        v.resize(5, Obj(50));
+    v.resize(5, Obj(50));
 
-        ASSERT_TRUE(!v.empty());
-        ASSERT_TRUE(v.size() == 5);
+    ASSERT_TRUE(!v.empty());
+    ASSERT_TRUE(v.size() == 5);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(v.capacity() == 8);
+    ASSERT_TRUE(v.capacity() == 8);
 #endif
-        ASSERT_TRUE(v[0].id == 10);
-        ASSERT_TRUE(v[1].id == 11);
-        ASSERT_TRUE(v[2].id == 12);
-        ASSERT_TRUE(v[3].id == 13);
-        ASSERT_TRUE(v[4].id == 14);
-    }
+    ASSERT_TRUE(v[0].id == 10);
+    ASSERT_TRUE(v[1].id == 11);
+    ASSERT_TRUE(v[2].id == 12);
+    ASSERT_TRUE(v[3].id == 13);
+    ASSERT_TRUE(v[4].id == 14);
 
-    SUBCASE("to shorter") {
-        v.resize(3, Obj(50));
 
-        ASSERT_TRUE(!v.empty());
-        ASSERT_TRUE(v.size() == 3);
+    v.resize(3, Obj(50));
+
+    ASSERT_TRUE(!v.empty());
+    ASSERT_TRUE(v.size() == 3);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(v.capacity() == 8);
+    ASSERT_TRUE(v.capacity() == 8);
 #endif
-        ASSERT_TRUE(v[0].id == 10);
-        ASSERT_TRUE(v[1].id == 11);
-        ASSERT_TRUE(v[2].id == 12);
-    }
+    ASSERT_TRUE(v[0].id == 10);
+    ASSERT_TRUE(v[1].id == 11);
+    ASSERT_TRUE(v[2].id == 12);
 
-    SUBCASE("to zero") {
-        v.resize(0, Obj(50));
 
-        ASSERT_TRUE(v.empty());
-        ASSERT_TRUE(v.size() == 0);
+    v.resize(0, Obj(50));
+
+    ASSERT_TRUE(v.empty());
+    ASSERT_TRUE(v.size() == 0);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(v.capacity() == 8);
+    ASSERT_TRUE(v.capacity() == 8);
 #endif
-    }
 
-    SUBCASE("to longer without reallocation") {
-        v.resize(7, Obj(50));
 
-        ASSERT_TRUE(!v.empty());
-        ASSERT_TRUE(v.size() == 7);
+    v.resize(7, Obj(50));
+
+    ASSERT_TRUE(!v.empty());
+    ASSERT_TRUE(v.size() == 7);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(v.capacity() == 8);
+    ASSERT_TRUE(v.capacity() == 8);
 #endif
-        ASSERT_TRUE(v[0].id == 10);
-        ASSERT_TRUE(v[1].id == 11);
-        ASSERT_TRUE(v[2].id == 12);
-        ASSERT_TRUE(v[3].id == 13);
-        ASSERT_TRUE(v[4].id == 14);
-        ASSERT_TRUE(v[5].id == 50);
-        ASSERT_TRUE(v[6].id == 50);
-    }
+    ASSERT_TRUE(v[0].id == 10);
+    ASSERT_TRUE(v[1].id == 11);
+    ASSERT_TRUE(v[2].id == 12);
+    ASSERT_TRUE(v[3].id == 13);
+    ASSERT_TRUE(v[4].id == 14);
+    ASSERT_TRUE(v[5].id == 50);
+    ASSERT_TRUE(v[6].id == 50);
 
-    SUBCASE("to longer with reallocation") {
-        v.resize(9, Obj(50));
+    v.resize(9, Obj(50));
 
-        ASSERT_TRUE(!v.empty());
-        ASSERT_TRUE(v.size() == 9);
+    ASSERT_TRUE(!v.empty());
+    ASSERT_TRUE(v.size() == 9);
 #ifndef TEST_STD_VECTOR
-        ASSERT_TRUE(v.capacity() == 16);
+    ASSERT_TRUE(v.capacity() == 16);
 #endif
-        ASSERT_TRUE(v[0].id == 10);
-        ASSERT_TRUE(v[1].id == 11);
-        ASSERT_TRUE(v[2].id == 12);
-        ASSERT_TRUE(v[3].id == 13);
-        ASSERT_TRUE(v[4].id == 14);
-        ASSERT_TRUE(v[5].id == 50);
-        ASSERT_TRUE(v[6].id == 50);
-        ASSERT_TRUE(v[7].id == 50);
-        ASSERT_TRUE(v[8].id == 50);
-    }
+    ASSERT_TRUE(v[0].id == 10);
+    ASSERT_TRUE(v[1].id == 11);
+    ASSERT_TRUE(v[2].id == 12);
+    ASSERT_TRUE(v[3].id == 13);
+    ASSERT_TRUE(v[4].id == 14);
+    ASSERT_TRUE(v[5].id == 50);
+    ASSERT_TRUE(v[6].id == 50);
+    ASSERT_TRUE(v[7].id == 50);
+    ASSERT_TRUE(v[8].id == 50);
+
 }
 
-TEST_CASE(
-    "push_back copy keeps strong exception safety even for capacity when "
-    "reallocating") {
+TEST(vector, 
+    push_back_copy_keeps_strong_exception_safety_even_for_capacity_when_reallocating) {
     struct artificial_exception {};
     struct S {
         // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
@@ -794,9 +748,8 @@ TEST_CASE(
     ASSERT_TRUE(v[3].data == std::string(500U, 'x'));
 }
 
-TEST_CASE(
-    "resize keeps strong exception safety even for capacity when "
-    "reallocating") {
+TEST(vector, 
+    resize_keeps_strong_exception_safety_even_for_capacity_when_reallocating) {
     struct artificial_exception {};
     struct S {
         // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
@@ -831,7 +784,7 @@ TEST_CASE(
 }
 
 #ifndef TEST_STD_VECTOR
-TEST_CASE("copy assignment keeps strong exception safety") {
+TEST(vector, copy_assignment_keeps_strong_exception_safety) {
     struct artificial_exception {};
     struct S {
         // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
@@ -884,7 +837,7 @@ TEST_CASE("copy assignment keeps strong exception safety") {
 }
 #endif
 
-TEST_CASE("operator[] and at() have lvalue/rvalue overloads") {
+TEST(vector, op_and_at_have_lvalue_or_rvalue_overloads) {
     struct TracingObj {
         // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
         int kind = 0;
@@ -911,67 +864,61 @@ TEST_CASE("operator[] and at() have lvalue/rvalue overloads") {
     v[1].kind = 20;
     v.at(2).kind = 30;
 
-    SUBCASE("operator[] &") {
-        TracingObj o = v[0];
-        ASSERT_TRUE(o.kind == 1);
-        ASSERT_TRUE(v[0].kind == 10);
-    }
+    TracingObj o = v[0];
+    ASSERT_TRUE(o.kind == 1);
+    ASSERT_TRUE(v[0].kind == 10);
 
-    SUBCASE("at() &") {
-        TracingObj o = v.at(0);
-        ASSERT_TRUE(o.kind == 1);
-        ASSERT_TRUE(v[0].kind == 10);
-    }
+
+    TracingObj o2 = v.at(0);
+    ASSERT_TRUE(o2.kind == 1);
+    ASSERT_TRUE(v[0].kind == 10);
+
 
 #ifndef TEST_STD_VECTOR
-    SUBCASE("operator[] &&") {
-        TracingObj o = std::move(v)[0];
-        ASSERT_TRUE(o.kind == 2);
-        // NOLINTNEXTLINE(bugprone-use-after-move)
-        ASSERT_TRUE(v[0].kind == -2);
-    }
+    TracingObj o3 = std::move(v)[0];
+    ASSERT_TRUE(o3.kind == 2);
+    // NOLINTNEXTLINE(bugprone-use-after-move)
+    ASSERT_TRUE(v[0].kind == -2);
 
-    SUBCASE("at() &&") {
-        TracingObj o = std::move(v).at(0);
-        ASSERT_TRUE(o.kind == 2);
-        // NOLINTNEXTLINE(bugprone-use-after-move)
-        ASSERT_TRUE(v[0].kind == -2);
-    }
+
+    TracingObj o4 = std::move(v).at(0);
+    ASSERT_TRUE(o4.kind == 2);
+    // NOLINTNEXTLINE(bugprone-use-after-move)
+    ASSERT_TRUE(v[0].kind == -2);
+
 #endif
 }
 
-TEST_CASE("new elements are value-initialized") {
-    SUBCASE("in constructor") {
-        for (int step = 0; step < 10; step++) {
-            vector<int> vec(1000);
-            for (std::size_t i = 0; i < vec.size(); i++) {
-                ASSERT_TRUE(vec[i] == 0);
-                vec[i] = 10;
-            }
+TEST(vector, new_elements_are_value_initialized) {
+
+    for (int step = 0; step < 10; step++) {
+        vector<int> vec(1000);
+        for (std::size_t i = 0; i < vec.size(); i++) {
+            ASSERT_TRUE(vec[i] == 0);
+            vec[i] = 10;
         }
     }
 
-    SUBCASE("in resize with and without reallocation") {
-        for (int step = 0; step < 10; step++) {
-            vector<int> vec;
-            vec.resize(500);
-            for (std::size_t i = 0; i < 500; i++) {
-                ASSERT_TRUE(vec[i] == 0);
-                vec[i] = 10;
-            }
-            vec.resize(1000);
-            for (std::size_t i = 500; i < 1000; i++) {
-                ASSERT_TRUE(vec[i] == 0);
-                vec[i] = 10;
-            }
-            vec.resize(0);
-            vec.resize(1000);
-            for (std::size_t i = 0; i < vec.size(); i++) {
-                ASSERT_TRUE(vec[i] == 0);
-                vec[i] = 10;
-            }
+    for (int step = 0; step < 10; step++) {
+        vector<int> vec;
+        vec.resize(500);
+        for (std::size_t i = 0; i < 500; i++) {
+            ASSERT_TRUE(vec[i] == 0);
+            vec[i] = 10;
+        }
+        vec.resize(1000);
+        for (std::size_t i = 500; i < 1000; i++) {
+            ASSERT_TRUE(vec[i] == 0);
+            vec[i] = 10;
+        }
+        vec.resize(0);
+        vec.resize(1000);
+        for (std::size_t i = 0; i < vec.size(); i++) {
+            ASSERT_TRUE(vec[i] == 0);
+            vec[i] = 10;
         }
     }
+
 }
 
 namespace {
@@ -1005,7 +952,6 @@ struct CounterAllocator {
     using value_type = T;
 
     T *allocate(std::size_t count) {
-        ASSERT_TRUE(count > 0);
         T *result = static_cast<T *>(::operator new(count * sizeof(T)));
         global_counters.new_count++;
         global_counters.new_total_elems += count;
@@ -1022,14 +968,7 @@ struct CounterAllocator {
 };
 }  // namespace
 
-TEST_CASE(
-    "custom allocator is used by "
-#ifdef TEST_STD_VECTOR
-    "std::vector<std::string>"
-#else
-    "lab_07::vector<std::string>"
-#endif
-) {
+TEST(vector, custom_allocator_is_used_by_vector_string) {
     Counters res = with_counters([]() {
         struct S {
             char buf[40]{};
