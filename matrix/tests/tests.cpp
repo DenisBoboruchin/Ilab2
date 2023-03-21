@@ -37,3 +37,32 @@ TEST(matrix, square_brackets)
     const matrix_space::matrix<int> matrix_cnst(10, 10, 7);
     ASSERT_EQ(matrix_cnst[4][2], 7);
 }
+
+TEST(matrix, is_square)
+{
+    matrix<int> matrix1 (3, 2);
+    ASSERT_TRUE(!matrix1.is_square ());
+
+    matrix<int> matrix2 (3, 3);
+    ASSERT_TRUE(matrix2.is_square ());
+}
+
+TEST(matrix, transpose)
+{
+    matrix<int> matrix (3, 4, 6);
+    matrix[2][1] = 7;
+    matrix[1][3] = 8;
+
+    matrix.transpose ();
+}
+
+TEST(matrix, sum)
+{
+    matrix<int> matrix1 (3, 6, 1);
+    matrix1[2][1] = 3;
+    matrix1[1][3] = 2;
+    
+    matrix<int> matrix2 (3, 6, 2);
+
+    matrix<int> matrix_sum = matrix1 + matrix2;
+}

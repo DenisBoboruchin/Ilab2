@@ -24,15 +24,19 @@ private:
     };
 
 public:
-
     matrix(const size_t num_rows = 0, const size_t num_cols = 0, const T &value = {});
+    
+    proxy_row_t operator[](size_t num_row) &;
+    const const_proxy_row_t operator[](size_t num_row) const &;
 
+    matrix operator+ (const matrix& other) const;
+
+    matrix& transpose ();
 
     size_t get_num_rows() const;
     size_t get_num_cols() const;
 
-    proxy_row_t operator[](size_t num_row) &;
-    const const_proxy_row_t operator[](size_t num_row) const &;
+    bool is_square () const;
 
     void dump() const;
 
@@ -78,11 +82,50 @@ const typename matrix<T>::const_proxy_row_t matrix<T>::operator[](size_t num_row
 }
 
 template <typename T>
+matrix<T> matrix<T>::operator+ (const matrix& other) const
+{
+    if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols ()) 
+    {
+        std::cout << "ahaha 123" << std::endl;
+    }
+
+    matrix<T> sum {num_rows_, num_cols_};
+
+    for (int index_row = 0; index_row != num_rows_; ++index_row)
+    {
+        for (int index_col = 0; index_col != num_cols_; ++index_col)
+        {
+            sum[index_row][index_col] = data_[index_row][index_col] + other[index_row][index_col];
+        }
+    }
+
+    return sum;
+}
+
+template <typename T>
+matrix<T>& matrix<T>::transpose ()
+{
+    matrix<T> transposed_matrix {num_cols_, num_rows_};
+
+    for (int index_row = 0; index_row != num_cols_; ++index_row)
+    {
+        for (int index_col = 0; index_col != num_rows_; ++index_col)
+        {
+            transposed_matrix[index_row][index_col] = data_[index_col][index_row];
+        }
+    }
+
+    std::swap (*this, transposed_matrix);
+
+    return *this;
+}
+
+template <typename T>
 void matrix<T>::dump() const
 {
     for (int index_row = 0; index_row != num_rows_; ++index_row) {
         for (int index_col = 0; index_col != num_cols_; ++index_col) {
-            std::cout << (data_.at(index_row)).at(index_col) << ' ';
+            std::cout << data_[index_row][index_col] << ' ';
         }
 
         std::cout << std::endl;
@@ -99,6 +142,12 @@ template <typename T>
 size_t matrix<T>::get_num_cols() const
 {
     return num_cols_;
+}
+
+template <typename T>
+bool matrix<T>::is_square () const
+{
+    return num_cols_ == num_rows_;
 }
 
 }  // namespace matrix_space
