@@ -24,7 +24,9 @@ private:
     };
 
 public:
+
     matrix(const size_t num_rows = 0, const size_t num_cols = 0, const T &value = {});
+
 
     size_t get_num_rows() const;
     size_t get_num_cols() const;
