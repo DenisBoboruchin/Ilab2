@@ -9,7 +9,11 @@ if (TESTING)
     
     set(SOURCE_TEST tests/tests.cpp)
     include_directories(include)
-    #    add_definitions(-DPROJECT_DIR_PATH=\"${CMAKE_SOURCE_DIR}\")
+   
+    option(TEST_STD_VECTOR off)
+    if (TEST_STD_VECTOR)
+        add_definitions(-DPROJECT_DIR_PATH=\"${CMAKE_SOURCE_DIR}\")
+    endif()
     
     find_package (GTest REQUIRED)
     include_directories (${GTEST_INCLUDE_DIRS})
