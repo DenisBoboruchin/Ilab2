@@ -74,3 +74,9 @@ TEST(matrix, mul)
 
     matrix<int> matrix_mul = matrix1 * matrix2;
 }
+
+TEST(matrix, eye_and_square)
+{
+    matrix<int> matrix_eye = matrix_space::matrix<int>::eye(2, 4);
+    matrix<int> matrix_square = matrix_space::matrix<int>::square(5, 4);
+}
