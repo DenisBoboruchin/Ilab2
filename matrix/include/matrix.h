@@ -45,7 +45,6 @@ public:
     bool operator==(const matrix &other) const;
 
     matrix &transpose();
-    matrix &reverse ();
 
     T determinant() const;
 
@@ -269,6 +268,7 @@ T matrix<T>::determinant() const
     matrix lower = eye(num_rows_, num_cols_);
     matrix upper = square(num_rows_);
 
+#if 0
     T determinant = T {1};
     for (int index_row = 0; index_row != num_rows_; ++index_row) {
         const row_t &data_row = data_[index_row]; 
@@ -295,6 +295,37 @@ T matrix<T>::determinant() const
             }
         }
     }
+    lower.dump ();
+    upper.dump ();
+#endif
+    T determinant = T {1};
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        const row_t &data_row = data_[index_row]; 
+        row_t &lower_row = lower[index_row].row;
+        for (int index_col = 0; index_col != num_rows_; ++index_col) {
+            T temp {};
+            if (index_col >= index_row) {
+                for (int index = 0; index != index_row; ++index) {
+                    temp += lower_row[index] * upper[index_col][index];
+                }
+
+                T elem = data_row[index_col] - temp;
+                upper[index_col][index_row] = elem;
+                if (index_row == index_col) {
+                    determinant *= elem;
+                }
+
+            } else {
+                for (int index = 0; index != index_col; ++index) {
+                    temp += lower_row[index] * upper[index_col][index];
+                }
+
+                lower_row[index_col] = (data_row[index_col] - temp) / upper[index_col][index_col];
+            }
+        }
+    }
+
+    upper.dump ();
 
     return determinant;
 }
@@ -312,23 +343,6 @@ matrix<T> &matrix<T>::transpose()
     }
 
     std::swap(*this, transposed_matrix);
-
-    return *this;
-}
-
-template <typename T>
-matrix<T> &matrix<T>::reverse()
-{
-    matrix<T> reversed_matrix {num_cols_, num_rows_};
-
-    for (int index_row = 0; index_row != num_cols_; ++index_row) {
-        row_t &row = reversed_matrix[index_row].row;
-        for (int index_col = 0; index_col != num_rows_; ++index_col) {
-            row[index_col] = data_[index_col][index_row];
-        }
-    }
-
-    std::swap(*this, reversed_matrix);
 
     return *this;
 }

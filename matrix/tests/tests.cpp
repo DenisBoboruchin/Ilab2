@@ -106,7 +106,7 @@ TEST(matrix, eye_and_square)
     matrix<std::string> matrix_square = matrix_space::matrix<std::string>::square(5, "sqr");
 }
 
-TEST(matrix, determinant)
+TEST(matrix, determinant_1)
 {
     matrix<int> matrix {2, 2};
     matrix[0][0] = 1;
@@ -114,5 +114,20 @@ TEST(matrix, determinant)
     matrix[1][0] = 2;
     matrix[1][1] = 3;
 
+    ASSERT_EQ(matrix.determinant(), -1);
+}
+
+TEST(matrix, determinant_2)
+{
+    matrix<int> matrix {3, 3};
+    std::vector<int> matrix_data (1, 3, 5, 3, 5, 8, 1, 3, 4);
+
+    for (int i = 0; i != 3; ++i)
+    {
+        for (int j = 0; j != 3; ++j)
+        {
+            matrix[i][j] = i + j; 
+        }   
+    }
     ASSERT_EQ(matrix.determinant(), -1);
 }
