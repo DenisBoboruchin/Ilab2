@@ -34,8 +34,8 @@ TEST(matrix, square_brackets)
     matrix[3][0] = 10;
     ASSERT_EQ(matrix[3][0], 10);
 
-    const matrix_space::matrix<int> matrix_cnst(10, 10, 7);
-    ASSERT_EQ(matrix_cnst[4][2], 7);
+    const matrix_space::matrix<int> matrix_const(10, 10, 7);
+    ASSERT_EQ(matrix_const[4][2], 7);
 }
 
 TEST(matrix, is_square)
@@ -64,8 +64,17 @@ TEST(matrix, sum)
 
     matrix<int> matrix2(3, 6, 2);
     matrix<int> matrix_sum = matrix1 + matrix2;
-
     matrix1 += matrix2;
+
+    ASSERT_EQ (matrix_sum == matrix1, true);
+    
+    const matrix<int> matrix_const (3, 6, 3);
+    matrix1 += matrix_const;
+    matrix1[2][1] = 10;
+    matrix1[1][3] = 8;
+    matrix_sum += matrix_sum;
+
+    ASSERT_EQ (matrix_sum == matrix1, true);
 }
 
 TEST(matrix, mul)
@@ -74,6 +83,9 @@ TEST(matrix, mul)
     matrix<int> matrix2(3, 2, 2);
 
     matrix<int> matrix_mul = matrix1 * matrix2;
+    matrix1 *= matrix2;
+
+    ASSERT_EQ (matrix_mul == matrix1, true);
 }
 
 TEST(matrix, compare_operator)
