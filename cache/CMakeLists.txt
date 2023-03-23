@@ -9,13 +9,35 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_COMPILER g++)
 
+set(MAIN_PROGRAM_SOURCE src/main.cpp)
+
+include_directories(include parser/include) 
+
+#main
+add_executable (main ${MAIN_PROGRAM_SOURCE})
+target_link_libraries (main PRIVATE parser)
+
+add_custom_target (run_cache_lfu 
+    COMMAND ./main -lfu
+)
+add_dependencies (run_cache_lfu main)
+
+add_custom_target (run_cache_lru 
+    COMMAND ./main -lru
+)
+add_dependencies (run_cache_lru main)
+
+add_custom_target (run_cache_perfect 
+    COMMAND ./main -perfect
+)
+add_dependencies (run_cache_perfect main)
+
 #tests
 option(TESTING "Include testing" ON)
 if (TESTING)
     message ("Include testing")
     
     set(SOURCE_TEST tests/tests.cpp)
-    include_directories(include parser/include)
     add_definitions(-DPROJECT_DIR_PATH=\"${CMAKE_SOURCE_DIR}\")
     
     find_package (GTest REQUIRED)
