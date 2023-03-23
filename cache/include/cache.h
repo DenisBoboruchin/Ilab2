@@ -19,6 +19,7 @@ public:
     bool lookup_update(const keyT key, const F slow_get_page);
 
     bool is_full() const;
+    void cache_dump() const;
 
 private:
     struct elem_t;
@@ -32,8 +33,6 @@ private:
     };
 
     int delete_unusable_elem_();
-
-    void cache_dump_() const;
 
 private:
     std::list<std::pair<int, std::list<elem_t>>> lists_;
@@ -111,8 +110,8 @@ int cache_lfu<T, keyT>::delete_unusable_elem_()
     hash_list_.erase(unuse_key);
     unuse_pair_itr->second.pop_back();
 
-    if (unuse_pair_itr->first != START_ELEMS_FREQ) {
-        if (!unuse_pair_itr->second.size()) {
+    if (!unuse_pair_itr->second.size()) {
+        if (unuse_pair_itr->first != START_ELEMS_FREQ) {
             lists_.pop_front();
         }
     }
@@ -123,7 +122,7 @@ int cache_lfu<T, keyT>::delete_unusable_elem_()
 }
 
 template <typename T, typename keyT>
-void cache_lfu<T, keyT>::cache_dump_() const
+void cache_lfu<T, keyT>::cache_dump() const
 {
     listsItr end_lists = lists_.end();
     for (listsItr pair = lists_.begin(); pair != end_lists; ++pair) {
@@ -249,7 +248,7 @@ std::vector<unsigned> cache_perfect<T, keyT>::first_pass_keys_(std::vector<keyT>
 template <typename T, typename keyT>
 bool cache_perfect<T, keyT>::is_full() const
 {
-    return (cache_.size() == capacity_);
+    return cache_.size() == capacity_;
 }
 
 template <typename T, typename keyT = int>
@@ -262,8 +261,7 @@ public:
 
     bool is_full() const;
 
-private:
-    void cache_dump_(void) const;
+    void cache_dump() const;
 
 private:
     size_t capacity_ = 512;
@@ -294,14 +292,15 @@ bool cache_lru<T, keyT>::lookup_update(const keyT key, const F slow_get_page)
     }
 
     listItr page_itr = hash_itr_page->second;
-    if (page_itr != cache_.begin())
+    if (page_itr != cache_.begin()) {
         cache_.splice(cache_.begin(), cache_, page_itr);
+    }
 
     return true;
 }
 
 template <typename T, typename keyT>
-void cache_lru<T, keyT>::cache_dump_(void) const
+void cache_lru<T, keyT>::cache_dump() const
 {
     printf("in cache: ");
 
@@ -319,7 +318,7 @@ void cache_lru<T, keyT>::cache_dump_(void) const
 template <typename T, typename keyT>
 bool cache_lru<T, keyT>::is_full() const
 {
-    return (cache_.size() == capacity_);
+    return cache_.size() == capacity_;
 }
 
 }  // namespace caches
