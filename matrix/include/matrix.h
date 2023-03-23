@@ -32,9 +32,16 @@ public:
     const const_proxy_row_t operator[](size_t num_row) const &;
 
     matrix operator+(const matrix &other) const;
+    matrix &operator+=(const matrix &other);
+
     matrix operator-(const matrix &other) const;
+    matrix &operator-=(const matrix &other);
 
     matrix operator*(const matrix &other) const;
+    matrix &operator*=(const matrix &other);
+
+    bool operator!=(const matrix &other) const;
+    bool operator==(const matrix &other) const;
 
     matrix &transpose();
 
@@ -67,7 +74,7 @@ matrix<T> matrix<T>::eye(const size_t num_rows, const size_t num_cols)
     int min = std::min(num_rows, num_cols);
 
     for (int index = 0; index != min; ++index) {
-        eye[index][index] = 1;
+        eye[index][index] = T {1};
     }
 
     return eye;
@@ -127,6 +134,23 @@ matrix<T> matrix<T>::operator+(const matrix &other) const
 }
 
 template <typename T>
+matrix<T> &matrix<T>::operator+=(const matrix &other)
+{
+    if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
+        std::cout << "ahaha 123" << std::endl;
+        return *this;
+    }
+
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        for (int index_col = 0; index_col != num_cols_; ++index_col) {
+            data_[index_row][index_col] += other[index_row][index_col];
+        }
+    }
+
+    return *this;
+}
+
+template <typename T>
 matrix<T> matrix<T>::operator-(const matrix &other) const
 {
     if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
@@ -143,6 +167,23 @@ matrix<T> matrix<T>::operator-(const matrix &other) const
     }
 
     return sub;
+}
+
+template <typename T>
+matrix<T> &matrix<T>::operator-=(const matrix &other)
+{
+    if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
+        std::cout << "ahaha 123" << std::endl;
+        return *this;
+    }
+
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        for (int index_col = 0; index_col != num_cols_; ++index_col) {
+            data_[index_row][index_col] -= other[index_row][index_col];
+        }
+    }
+
+    return *this;
 }
 
 template <typename T>
@@ -172,6 +213,56 @@ matrix<T> matrix<T>::operator*(const matrix &other) const
 }
 
 template <typename T>
+matrix<T> &matrix<T>::operator*=(const matrix &other)
+{
+    if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
+        std::cout << "ahaha 123" << std::endl;
+        return *this;
+    }
+
+    matrix<T> other_transposed = other;
+    other_transposed.transpose();
+
+    for (int index = 0; index != num_rows_; ++index) {
+        for (int index_row = 0; index_row != num_rows_; ++index_row) {
+            T val = 0;
+            for (int index_col = 0; index_col != num_cols_; ++index_col) {
+                val += data_[index][index_col] * other_transposed[index_row][index_col];
+            }
+
+            data_[index][index_row] = val;
+        }
+    }
+
+    return *this;
+}
+
+template <typename T>
+bool matrix<T>::operator!=(const matrix &other) const
+{
+    if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
+        std::cout << "ahaha 123" << std::endl;
+        return 0;
+    }
+
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        for (int index_col = 0; index_col != num_cols_; ++index_col) {
+            if (data_[index_row][index_col] != other[index_row][index_col]) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+template <typename T>
+bool matrix<T>::operator==(const matrix &other) const
+{
+    return !(operator!=(other));
+}
+
+template <typename T>
 T matrix<T>::determinant() const
 {
     if (!is_square()) {
@@ -182,7 +273,7 @@ T matrix<T>::determinant() const
     matrix lower = eye(num_rows_, num_cols_);
     matrix upper = square(num_rows_);
 
-    T determinant = 1;
+    T determinant = T {1};
     for (int index_row = 0; index_row != num_rows_; ++index_row) {
         for (int index_col = 0; index_col != num_rows_; ++index_col) {
             T temp {};

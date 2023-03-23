@@ -63,8 +63,9 @@ TEST(matrix, sum)
     matrix1[1][3] = 2;
 
     matrix<int> matrix2(3, 6, 2);
-
     matrix<int> matrix_sum = matrix1 + matrix2;
+
+    matrix1 += matrix2;
 }
 
 TEST(matrix, mul)
@@ -75,10 +76,22 @@ TEST(matrix, mul)
     matrix<int> matrix_mul = matrix1 * matrix2;
 }
 
+TEST(matrix, compare_operator)
+{
+    matrix<int> matrix1(3, 4, 1);
+    matrix<int> matrix2 = matrix1;
+    ASSERT_EQ(matrix1 == matrix2, true);
+    ASSERT_EQ(matrix1 != matrix2, false);
+
+    matrix2[1][2] = 2;
+    ASSERT_EQ(matrix1 == matrix2, false);
+    ASSERT_EQ(matrix1 != matrix2, true);
+}
+
 TEST(matrix, eye_and_square)
 {
     matrix<int> matrix_eye = matrix_space::matrix<int>::eye(2, 4);
-    matrix<int> matrix_square = matrix_space::matrix<int>::square(5, 4);
+    matrix<std::string> matrix_square = matrix_space::matrix<std::string>::square(5, "sqr");
 }
 
 TEST(matrix, determinant)
