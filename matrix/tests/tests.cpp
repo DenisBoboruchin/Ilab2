@@ -80,3 +80,14 @@ TEST(matrix, eye_and_square)
     matrix<int> matrix_eye = matrix_space::matrix<int>::eye(2, 4);
     matrix<int> matrix_square = matrix_space::matrix<int>::square(5, 4);
 }
+
+TEST(matrix, determinant)
+{
+    matrix<int> matrix {2, 2};
+    matrix[0][0] = 1;
+    matrix[0][1] = 2;
+    matrix[1][0] = 2;
+    matrix[1][1] = 3;
+
+    ASSERT_EQ(matrix.determinant(), -1);
+}
