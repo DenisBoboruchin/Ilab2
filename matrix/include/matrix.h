@@ -123,13 +123,7 @@ matrix<T> matrix<T>::operator+(const matrix &other) const
     }
 
     matrix<T> sum {*this};
-
-    for (int index_row = 0; index_row != num_rows_; ++index_row) {
-        row_t &sum_row = sum[index_row].row;
-        for (int index_col = 0; index_col != num_cols_; ++index_col) {
-            sum_row[index_col] += other[index_row][index_col];
-        }
-    }
+    sum += other;
 
     return sum;
 }
@@ -161,13 +155,7 @@ matrix<T> matrix<T>::operator-(const matrix &other) const
     }
 
     matrix<T> sub {*this};
-
-    for (int index_row = 0; index_row != num_rows_; ++index_row) {
-        row_t &sub_row = sub[index_row].row;
-        for (int index_col = 0; index_col != num_cols_; ++index_col) {
-            sub_row[index_col] -= other[index_row][index_col];
-        }
-    }
+    sub -= other;
 
     return sub;
 }
@@ -200,23 +188,8 @@ matrix<T> operator*(const matrix<T> &matrix_1, const matrix<T> &matrix_2)
         return matrix<T> {};
     }
 
-    matrix<T> muled {num_rows, num_rows};
-    matrix<T> matrix_2_transposed = matrix_2;
-    matrix_2_transposed.transpose();
-
-    for (int index = 0; index != num_rows; ++index) {
-        // const row_t &data_row = matrix_1[index].row;
-        for (int index_row = 0; index_row != num_rows; ++index_row) {
-            T val = T {0};
-
-            // row_t &trns_row = matrix_2_transposed[index_row].row;
-            for (int index_col = 0; index_col != num_cols; ++index_col) {
-                val += matrix_1[index][index_col] * matrix_2_transposed[index_row][index_col];
-            }
-
-            muled[index][index_row] = val;
-        }
-    }
+    matrix<T> muled = matrix_1;
+    muled *= matrix_2;
 
     return muled;
 }
@@ -225,11 +198,7 @@ template <typename T>
 matrix<T> operator*(const matrix<T> &matrix_mul, const T &value)
 {
     matrix<T> muled {matrix_mul};
-    for (int index_row = 0, num_rows = muled.get_num_rows(); index_row != num_rows; ++index_row) {
-        for (int index_col = 0, num_cols = muled.get_num_cols(); index_col != num_cols; ++index_col) {
-            muled[index_row][index_col] *= value;
-        }
-    }
+    muled *= value;
 
     return muled;
 }
@@ -238,11 +207,7 @@ template <typename T>
 matrix<T> operator*(const T &value, const matrix<T> &matrix_mul)
 {
     matrix<T> muled {matrix_mul};
-    for (int index_row = 0, num_rows = muled.get_num_rows(); index_row != num_rows; ++index_row) {
-        for (int index_col = 0, num_cols = muled.get_num_cols(); index_col != num_cols; ++index_col) {
-            muled[index_row][index_col] *= value;
-        }
-    }
+    muled *= value;
 
     return muled;
 }
@@ -255,7 +220,21 @@ matrix<T> &matrix<T>::operator*=(const matrix &other)
         return *this;
     }
 
-    matrix<T> muled = *this * other;
+    matrix<T> muled {num_rows_, num_rows_};
+    matrix<T> other_transposed = other;
+    other_transposed.transpose();
+    for (int index = 0; index != num_rows_; ++index) {
+        row_t &data_row = data_[index];
+        for (int index_row = 0; index_row != num_rows_; ++index_row) {
+            T val = T {0};
+            row_t &trns_row = other_transposed[index_row].row;
+            for (int index_col = 0; index_col != num_cols_; ++index_col) {
+                val += data_row[index_col] * trns_row[index_col];
+            }
+            muled[index][index_row] = val;
+        }
+    }
+
     std::swap(*this, muled);
 
     return *this;
@@ -264,8 +243,12 @@ matrix<T> &matrix<T>::operator*=(const matrix &other)
 template <typename T>
 matrix<T> &matrix<T>::operator*=(const T &value)
 {
-    matrix<T> muled = *this * value;
-    std::swap(*this, muled);
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        row_t &data_row = data_[index_row];
+        for (int index_col = 0; index_col != num_cols_; ++index_col) {
+            data_row[index_col] *= value;
+        }
+    }
 
     return *this;
 }
@@ -274,8 +257,7 @@ template <typename T>
 bool matrix<T>::operator!=(const matrix &other) const
 {
     if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
-        std::cout << "ahaha 123" << std::endl;
-        return 0;
+        return false;
     }
 
     for (int index_row = 0; index_row != num_rows_; ++index_row) {
