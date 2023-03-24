@@ -118,7 +118,35 @@ TEST(matrix, eye_and_square)
     matrix<std::string> matrix_square = matrix_space::matrix<std::string>::square(5, "sqr");
 }
 
-TEST(matrix, determinant_1)
+TEST(matrix, swap_rows)
+{
+    matrix<int> matrix_1(3, 4, 2);
+    matrix_1[1][3] = 0;
+    matrix_1[2][1] = 8;
+
+    matrix_1.swap_rows(1, 2);
+
+    ASSERT_EQ(matrix_1[2][3], 0);
+    ASSERT_EQ(matrix_1[1][1], 8);
+    ASSERT_EQ(matrix_1[1][3], 2);
+    ASSERT_EQ(matrix_1[2][1], 2);
+}
+
+TEST(matrix, add_row)
+{
+    matrix<int> matrix_1(3, 4, 2);
+    matrix_1[1][3] = 0;
+    matrix_1[2][1] = 8;
+
+    matrix_1.add_row(1, 2);
+
+    ASSERT_EQ(matrix_1[2][3], 2);
+    ASSERT_EQ(matrix_1[1][1], 10);
+    ASSERT_EQ(matrix_1[1][3], 2);
+    ASSERT_EQ(matrix_1[2][1], 8);
+}
+
+TEST(matrix, determinant_2_2)
 {
     matrix<int> matrix {2, 2};
     matrix[0][0] = 1;
@@ -129,7 +157,7 @@ TEST(matrix, determinant_1)
     ASSERT_EQ(matrix.determinant(), -1);
 }
 
-TEST(matrix, determinant_2)
+TEST(matrix, determinant_3_3)
 {
     matrix<int> matrix {3, 3};
 
@@ -141,4 +169,23 @@ TEST(matrix, determinant_2)
     matrix[0][0] = 1;
 
     ASSERT_EQ(matrix.determinant(), -1);
+}
+
+TEST(matrix, determinant_100_100)
+{
+    int size = 100;
+    matrix<int> matrix = matrix_space::matrix<int>::eye(size, size);
+    matrix[5][5] = 2;
+    matrix[7][7] = 3;
+    matrix[18][18] = 7;
+
+    for (int i = 0; i != size; ++i) {
+        for (int j = 0; j != size; ++j) {
+            if (i != j) {
+                matrix.add_row(i, j);
+            }
+        }
+    }
+
+    ASSERT_EQ(matrix.determinant(), 42);
 }

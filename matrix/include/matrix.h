@@ -49,6 +49,9 @@ public:
 
     T determinant() const;
 
+    void swap_rows(const size_t num_row_1, const size_t num_row_2);
+    void add_row(const size_t num_row_1, const size_t num_row_2);
+
     size_t get_num_rows() const;
     size_t get_num_cols() const;
 
@@ -381,6 +384,32 @@ matrix<T> &matrix<T>::transpose()
     std::swap(*this, transposed_matrix);
 
     return *this;
+}
+
+template <typename T>
+void matrix<T>::swap_rows(const size_t num_row_1, const size_t num_row_2)
+{
+    if (num_row_1 >= num_rows_ || num_row_2 >= num_rows_) {
+        std::cout << "ahaha 123" << std::endl;
+        return;
+    }
+
+    std::swap(data_[num_row_1], data_[num_row_2]);
+}
+
+template <typename T>
+void matrix<T>::add_row(const size_t num_row_1, const size_t num_row_2)
+{
+    if (num_row_1 >= num_rows_ || num_row_2 >= num_rows_) {
+        std::cout << "ahaha 123" << std::endl;
+        return;
+    }
+
+    row_t &data_row = data_[num_row_1];
+    const row_t &data_row_add = data_[num_row_2];
+    for (int index_col = 0; index_col != num_cols_; ++index_col) {
+        data_row[index_col] += data_row_add[index_col];
+    }
 }
 
 template <typename T>
