@@ -24,7 +24,7 @@ private:
     };
 
 public:
-    matrix(const size_t num_rows = 0, const size_t num_cols = 0, const T &value = {});
+    explicit matrix(const size_t num_rows = 0, const size_t num_cols = 0, const T &value = {});
 
     static matrix eye(const size_t num_rows, const size_t num_cols);
     static matrix square(const size_t num_rows, const T &value = {});
@@ -40,6 +40,7 @@ public:
 
     matrix operator*(const matrix &other) const;
     matrix &operator*=(const matrix &other);
+    matrix &operator*=(const T &value);
 
     bool operator!=(const matrix &other) const;
     bool operator==(const matrix &other) const;
@@ -84,7 +85,7 @@ matrix<T> matrix<T>::eye(const size_t num_rows, const size_t num_cols)
 template <typename T>
 matrix<T> matrix<T>::square(const size_t num_rows, const T &value)
 {
-    return {num_rows, num_rows, value};
+    return matrix<T> {num_rows, num_rows, value};
 }
 
 template <typename T>
@@ -116,7 +117,7 @@ matrix<T> matrix<T>::operator+(const matrix &other) const
 {
     if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
         std::cout << "ahaha 123" << std::endl;
-        return {};
+        return matrix<T> {};
     }
 
     matrix<T> sum {*this};
@@ -192,7 +193,7 @@ matrix<T> matrix<T>::operator*(const matrix &other) const
 {
     if (num_rows_ != other.get_num_cols() || num_cols_ != other.get_num_rows()) {
         std::cout << "ahaha 123" << std::endl;
-        return {};
+        return matrix<T> {};
     }
 
     matrix<T> muled {num_rows_, num_rows_};
@@ -203,7 +204,7 @@ matrix<T> matrix<T>::operator*(const matrix &other) const
         const row_t &data_row = data_[index];
         for (int index_row = 0; index_row != num_rows_; ++index_row) {
             T val = 0;
-            
+
             row_t &trns_row = other_transposed[index_row].row;
             for (int index_col = 0; index_col != num_cols_; ++index_col) {
                 val += data_row[index_col] * trns_row[index_col];
@@ -224,10 +225,45 @@ matrix<T> &matrix<T>::operator*=(const matrix &other)
         return *this;
     }
 
-    matrix<T> muled = operator* (other);
-    std::swap (*this, muled);
+    matrix<T> muled = operator*(other);
+    std::swap(*this, muled);
 
     return *this;
+}
+
+template <typename T>
+matrix<T> &matrix<T>::operator*=(const T &value)
+{
+    matrix<T> muled = *this * value;
+    std::swap(*this, muled);
+
+    return *this;
+}
+
+template <typename T>
+matrix<T> operator*(const matrix<T> &matrix_mul, const T &value)
+{
+    matrix<T> muled {matrix_mul};
+    for (int index_row = 0, num_rows = muled.get_num_rows(); index_row != num_rows; ++index_row) {
+        for (int index_col = 0, num_cols = muled.get_num_cols(); index_col != num_cols; ++index_col) {
+            muled[index_row][index_col] *= value;
+        }
+    }
+
+    return muled;
+}
+
+template <typename T>
+matrix<T> operator*(const T &value, const matrix<T> &matrix_mul)
+{
+    matrix<T> muled {matrix_mul};
+    for (int index_row = 0, num_rows = muled.get_num_rows(); index_row != num_rows; ++index_row) {
+        for (int index_col = 0, num_cols = muled.get_num_cols(); index_col != num_cols; ++index_col) {
+            muled[index_row][index_col] *= value;
+        }
+    }
+
+    return muled;
 }
 
 template <typename T>
@@ -264,10 +300,6 @@ T matrix<T>::determinant() const
         std::cout << "ahaha 123" << std::endl;
         return {};
     }
-
-    matrix lower = eye(num_rows_, num_cols_);
-    matrix upper = square(num_rows_);
-
 #if 0
     T determinant = T {1};
     for (int index_row = 0; index_row != num_rows_; ++index_row) {
@@ -295,37 +327,41 @@ T matrix<T>::determinant() const
             }
         }
     }
-    lower.dump ();
-    upper.dump ();
 #endif
+    matrix lower = eye(num_rows_, num_cols_);
+    matrix upper_transposed = square(num_rows_);
+
     T determinant = T {1};
     for (int index_row = 0; index_row != num_rows_; ++index_row) {
-        const row_t &data_row = data_[index_row]; 
+        const row_t &data_row = data_[index_row];
         row_t &lower_row = lower[index_row].row;
         for (int index_col = 0; index_col != num_rows_; ++index_col) {
+            row_t &upper_row = upper_transposed[index_col].row;
             T temp {};
             if (index_col >= index_row) {
                 for (int index = 0; index != index_row; ++index) {
-                    temp += lower_row[index] * upper[index_col][index];
+                    temp += lower_row[index] * upper_row[index];
                 }
 
                 T elem = data_row[index_col] - temp;
-                upper[index_col][index_row] = elem;
+                upper_row[index_row] = elem;
                 if (index_row == index_col) {
                     determinant *= elem;
                 }
 
             } else {
                 for (int index = 0; index != index_col; ++index) {
-                    temp += lower_row[index] * upper[index_col][index];
+                    temp += lower_row[index] * upper_row[index];
                 }
 
-                lower_row[index_col] = (data_row[index_col] - temp) / upper[index_col][index_col];
+                T elem = upper_row[index_col];
+                if (elem == T {0}) {
+                    return T {0};
+                }
+                lower_row[index_col] = (data_row[index_col] - temp) / elem;
             }
         }
     }
-
-    upper.dump ();
 
     return determinant;
 }

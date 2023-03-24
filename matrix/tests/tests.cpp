@@ -66,15 +66,15 @@ TEST(matrix, sum)
     matrix<int> matrix_sum = matrix1 + matrix2;
     matrix1 += matrix2;
 
-    ASSERT_EQ (matrix_sum == matrix1, true);
-    
-    const matrix<int> matrix_const (3, 6, 3);
+    ASSERT_EQ(matrix_sum == matrix1, true);
+
+    const matrix<int> matrix_const(3, 6, 3);
     matrix1 += matrix_const;
     matrix1[2][1] = 10;
     matrix1[1][3] = 8;
     matrix_sum += matrix_sum;
 
-    ASSERT_EQ (matrix_sum == matrix1, true);
+    ASSERT_EQ(matrix_sum == matrix1, true);
 }
 
 TEST(matrix, mul)
@@ -85,7 +85,19 @@ TEST(matrix, mul)
     matrix<int> matrix_mul = matrix1 * matrix2;
     matrix1 *= matrix2;
 
-    ASSERT_EQ (matrix_mul == matrix1, true);
+    ASSERT_EQ(matrix_mul == matrix1, true);
+}
+
+TEST(matrix, mul_val)
+{
+    matrix<int> matrix1(3, 6, 3);
+    matrix<int> matrix2(3, 6, 9);
+
+    ASSERT_EQ(matrix2, matrix1 * 3);
+    ASSERT_EQ(matrix2, 3 * matrix1);
+
+    matrix1 *= 3;
+    ASSERT_EQ(matrix2, matrix1);
 }
 
 TEST(matrix, compare_operator)
@@ -120,14 +132,13 @@ TEST(matrix, determinant_1)
 TEST(matrix, determinant_2)
 {
     matrix<int> matrix {3, 3};
-    std::vector<int> matrix_data (1, 3, 5, 3, 5, 8, 1, 3, 4);
 
-    for (int i = 0; i != 3; ++i)
-    {
-        for (int j = 0; j != 3; ++j)
-        {
-            matrix[i][j] = i + j; 
-        }   
+    for (int i = 0; i != 3; ++i) {
+        for (int j = 0; j != 3; ++j) {
+            matrix[i][j] = i + j;
+        }
     }
+    matrix[0][0] = 1;
+
     ASSERT_EQ(matrix.determinant(), -1);
 }
