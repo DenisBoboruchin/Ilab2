@@ -38,7 +38,6 @@ public:
     matrix operator-(const matrix &other) const;
     matrix &operator-=(const matrix &other);
 
-    matrix &operator*=(const matrix &other);
     matrix &operator*=(const T &value);
 
     bool operator!=(const matrix &other) const;
@@ -179,7 +178,7 @@ matrix<T> &matrix<T>::operator-=(const matrix &other)
 }
 
 template <typename T>
-matrix<T> operator*(const matrix<T> &matrix_1, const matrix<T> &matrix_2)
+matrix<T> product(const matrix<T> &matrix_1, const matrix<T> &matrix_2)
 {
     size_t num_rows = matrix_1.get_num_rows();
     size_t num_cols = matrix_1.get_num_cols();
@@ -187,9 +186,20 @@ matrix<T> operator*(const matrix<T> &matrix_1, const matrix<T> &matrix_2)
         std::cout << "ahaha 123" << std::endl;
         return matrix<T> {};
     }
+    
+    matrix<T> muled {num_rows, num_rows};
+    matrix<T> matrix_2_transposed = matrix_2;
+    matrix_2_transposed.transpose();
 
-    matrix<T> muled = matrix_1;
-    muled *= matrix_2;
+    for (int index = 0; index != num_rows; ++index) {
+        for (int index_row = 0; index_row != num_rows; ++index_row) {
+            T val = T {0};
+            for (int index_col = 0; index_col != num_cols; ++index_col) {
+                val += matrix_1[index][index_col] * matrix_2_transposed[index_row][index_col];
+            }
+            muled[index][index_row] = val;
+        }
+    }
 
     return muled;
 }
@@ -210,34 +220,6 @@ matrix<T> operator*(const T &value, const matrix<T> &matrix_mul)
     muled *= value;
 
     return muled;
-}
-
-template <typename T>
-matrix<T> &matrix<T>::operator*=(const matrix &other)
-{
-    if (num_rows_ != other.get_num_cols() || num_cols_ != other.get_num_rows()) {
-        std::cout << "ahaha 123" << std::endl;
-        return *this;
-    }
-
-    matrix<T> muled {num_rows_, num_rows_};
-    matrix<T> other_transposed = other;
-    other_transposed.transpose();
-    for (int index = 0; index != num_rows_; ++index) {
-        row_t &data_row = data_[index];
-        for (int index_row = 0; index_row != num_rows_; ++index_row) {
-            T val = T {0};
-            row_t &trns_row = other_transposed[index_row].row;
-            for (int index_col = 0; index_col != num_cols_; ++index_col) {
-                val += data_row[index_col] * trns_row[index_col];
-            }
-            muled[index][index_row] = val;
-        }
-    }
-
-    std::swap(*this, muled);
-
-    return *this;
 }
 
 template <typename T>
