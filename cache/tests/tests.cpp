@@ -20,6 +20,18 @@ int main()
     return RUN_ALL_TESTS();
 }
 
+TEST(cache_perfect, test_1)
+{
+    int num_hits = get_perfect_hits(slow_get_page_int, get_local_file("perfect_test_1.txt"));
+    ASSERT_EQ(num_hits, 13);
+}
+
+TEST(cache_perfect, test_2)
+{
+    int num_hits = get_perfect_hits(slow_get_page_int, get_local_file("perfect_test_2.txt"));
+    ASSERT_EQ(num_hits, 810);
+}
+
 #if 0
 TEST (all_cashes, test_from_cin)
 {
@@ -34,13 +46,13 @@ TEST (all_cashes, test_from_cin)
 TEST(all_caches, small_test_1)
 {
     hits hits = get_hits(slow_get_page_int, get_local_file("small_test_1.txt"));
-    
+
     int num_lfu_hits = get_lfu_hits(slow_get_page_int, get_local_file("small_test_1.txt"));
     ASSERT_EQ(num_lfu_hits, 5);
-    
+
     int num_lru_hits = get_lru_hits(slow_get_page_int, get_local_file("small_test_1.txt"));
     ASSERT_EQ(num_lru_hits, 6);
-    
+
     int num_perfect_hits = get_perfect_hits(slow_get_page_int, get_local_file("small_test_1.txt"));
     ASSERT_EQ(num_perfect_hits, 6);
 

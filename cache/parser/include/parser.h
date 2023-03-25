@@ -77,10 +77,10 @@ template <typename T = int, typename keyT = int, typename F>
 int get_perfect_hits(const F get_page, const std::string &file_name = {})
 {
     std::vector<int> keys = read_keys(file_name);
-    
+
     int capacity = keys[0];
     keys.erase(keys.begin());
-    
+
     caches::cache_perfect<T, keyT> cache_perfect(capacity);
     return cache_perfect.lookup_update(keys, get_page);
 }

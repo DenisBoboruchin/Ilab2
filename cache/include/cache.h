@@ -192,7 +192,7 @@ int cache_perfect<T, keyT>::lookup_update(std::vector<keyT> &keys, F slow_get_pa
 
             if (is_full()) {
                 cacheItr unusable_key_itr = cache_.begin();
-                if (unusable_key_itr->first < to_next) {
+                if (unusable_key_itr->first <= to_next) {
                     continue;
                 }
 
@@ -227,7 +227,7 @@ int cache_perfect<T, keyT>::lookup_update(std::vector<keyT> &keys, F slow_get_pa
 template <typename T, typename keyT>
 std::vector<unsigned> cache_perfect<T, keyT>::first_pass_keys_(std::vector<keyT> &keys)
 {
-    std::vector<unsigned> freq_use(keys.size(), UINT_MAX);
+    std::vector<unsigned> dist_use(keys.size(), UINT_MAX);
 
     for (unsigned num_key = 0, size = keys.size(); num_key != size; ++num_key) {
         keyT key = keys.at(num_key);
@@ -236,13 +236,14 @@ std::vector<unsigned> cache_perfect<T, keyT>::first_pass_keys_(std::vector<keyT>
         if (check_prev != prev_use_hash_.end()) {
             unsigned num_prev_use = check_prev->second;
 
-            freq_use.at(num_prev_use) = num_key - num_prev_use;
+            dist_use.at(num_prev_use) = num_key - num_prev_use;
+            prev_use_hash_[key] = num_key;
+        } else {
+            prev_use_hash_.insert({key, num_key});
         }
-
-        prev_use_hash_[key] = num_key;
     }
 
-    return freq_use;
+    return dist_use;
 }
 
 template <typename T, typename keyT>
