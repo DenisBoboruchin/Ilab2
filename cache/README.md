@@ -35,3 +35,18 @@ To run tests:
 ```
 make run_caches_tests
 ```
+
+To run lfu cache:
+```
+make run_cache_lfu
+```
+
+To run lru cache:
+```
+make run_cache_lru
+```
+
+To run perfect cache:
+```
+make run_cache_perfect
+```

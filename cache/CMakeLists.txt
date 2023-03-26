@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16.3 FATAL_ERROR)
 
 set(PROJECT_NAME caches)
 project(${PROJECT_NAME} LANGUAGES CXX)
@@ -9,13 +9,42 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_COMPILER g++)
 
+set(CACHE_LFU_SOURCE src/cache_lfu.cpp)
+set(CACHE_LRU_SOURCE src/cache_lru.cpp)
+set(CACHE_PERFECT_SOURCE src/cache_perfect.cpp)
+
+include_directories(include parser/include) 
+
+#cache_lfu
+add_executable (cache_lfu ${CACHE_LFU_SOURCE})
+target_link_libraries (cache_lfu PRIVATE parser)
+add_custom_target (run_cache_lfu 
+    COMMAND ./cache_lfu
+)
+add_dependencies (run_cache_lfu cache_lfu)
+
+#cache_lru
+add_executable (cache_lru ${CACHE_LRU_SOURCE})
+target_link_libraries (cache_lru PRIVATE parser)
+add_custom_target (run_cache_lru 
+    COMMAND ./cache_lru
+)
+add_dependencies (run_cache_lru cache_lru)
+
+#cache_perfect
+add_executable (cache_perfect ${CACHE_PERFECT_SOURCE})
+target_link_libraries (cache_perfect PRIVATE parser)
+add_custom_target (run_cache_perfect 
+    COMMAND ./cache_perfect
+)
+add_dependencies (run_cache_perfect cache_perfect)
+
 #tests
 option(TESTING "Include testing" ON)
 if (TESTING)
     message ("Include testing")
     
     set(SOURCE_TEST tests/tests.cpp)
-    include_directories(include parser/include)
     add_definitions(-DPROJECT_DIR_PATH=\"${CMAKE_SOURCE_DIR}\")
     
     find_package (GTest REQUIRED)

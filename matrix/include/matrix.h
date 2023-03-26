@@ -24,19 +24,36 @@ private:
     };
 
 public:
-    matrix(const size_t num_rows = 0, const size_t num_cols = 0, const T &value = {});
-    
+    explicit matrix(const size_t num_rows = 0, const size_t num_cols = 0, const T &value = {});
+
+    static matrix eye(const size_t num_rows, const size_t num_cols);
+    static matrix square(const size_t num_rows, const T &value = {});
+
     proxy_row_t operator[](size_t num_row) &;
     const const_proxy_row_t operator[](size_t num_row) const &;
 
-    matrix operator+ (const matrix& other) const;
+    matrix operator+(const matrix &other) const;
+    matrix &operator+=(const matrix &other);
 
-    matrix& transpose ();
+    matrix operator-(const matrix &other) const;
+    matrix &operator-=(const matrix &other);
+
+    matrix &operator*=(const T &value);
+
+    bool operator!=(const matrix &other) const;
+    bool operator==(const matrix &other) const;
+
+    matrix &transpose();
+
+    T determinant() const;
+
+    void swap_rows(const size_t num_row_1, const size_t num_row_2);
+    void add_row(const size_t num_row_1, const size_t num_row_2);
 
     size_t get_num_rows() const;
     size_t get_num_cols() const;
 
-    bool is_square () const;
+    bool is_square() const;
 
     void dump() const;
 
@@ -54,6 +71,25 @@ matrix<T>::matrix(const size_t num_rows, const size_t num_cols, const T &value)
 }
 
 template <typename T>
+matrix<T> matrix<T>::eye(const size_t num_rows, const size_t num_cols)
+{
+    matrix eye {num_rows, num_cols};
+    int min = std::min(num_rows, num_cols);
+
+    for (int index = 0; index != min; ++index) {
+        eye[index][index] = T {1};
+    }
+
+    return eye;
+}
+
+template <typename T>
+matrix<T> matrix<T>::square(const size_t num_rows, const T &value)
+{
+    return matrix<T> {num_rows, num_rows, value};
+}
+
+template <typename T>
 T &matrix<T>::proxy_row_t::operator[](size_t num_col)
 {
     return row[num_col];
@@ -68,56 +104,250 @@ const T &matrix<T>::const_proxy_row_t::operator[](size_t num_col) const
 template <typename T>
 typename matrix<T>::proxy_row_t matrix<T>::operator[](size_t num_row) &
 {
-    row_t &row = data_[num_row];
-    proxy_row_t proxy_row {row};
-    return proxy_row;
+    return {data_[num_row]};
 }
 
 template <typename T>
 const typename matrix<T>::const_proxy_row_t matrix<T>::operator[](size_t num_row) const &
 {
-    const row_t &row = data_[num_row];
-    const_proxy_row_t proxy_row {row};
-    return proxy_row;
+    return {data_[num_row]};
 }
 
 template <typename T>
-matrix<T> matrix<T>::operator+ (const matrix& other) const
+matrix<T> matrix<T>::operator+(const matrix &other) const
 {
-    if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols ()) 
-    {
+    if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
         std::cout << "ahaha 123" << std::endl;
+        return matrix<T> {};
     }
 
-    matrix<T> sum {num_rows_, num_cols_};
-
-    for (int index_row = 0; index_row != num_rows_; ++index_row)
-    {
-        for (int index_col = 0; index_col != num_cols_; ++index_col)
-        {
-            sum[index_row][index_col] = data_[index_row][index_col] + other[index_row][index_col];
-        }
-    }
+    matrix<T> sum {*this};
+    sum += other;
 
     return sum;
 }
 
 template <typename T>
-matrix<T>& matrix<T>::transpose ()
+matrix<T> &matrix<T>::operator+=(const matrix &other)
 {
-    matrix<T> transposed_matrix {num_cols_, num_rows_};
+    if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
+        std::cout << "ahaha 123" << std::endl;
+        return *this;
+    }
 
-    for (int index_row = 0; index_row != num_cols_; ++index_row)
-    {
-        for (int index_col = 0; index_col != num_rows_; ++index_col)
-        {
-            transposed_matrix[index_row][index_col] = data_[index_col][index_row];
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        row_t &row = data_[index_row];
+        for (int index_col = 0; index_col != num_cols_; ++index_col) {
+            row[index_col] += other[index_row][index_col];
         }
     }
 
-    std::swap (*this, transposed_matrix);
+    return *this;
+}
+
+template <typename T>
+matrix<T> matrix<T>::operator-(const matrix &other) const
+{
+    if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
+        std::cout << "ahaha 123" << std::endl;
+        return {};
+    }
+
+    matrix<T> sub {*this};
+    sub -= other;
+
+    return sub;
+}
+
+template <typename T>
+matrix<T> &matrix<T>::operator-=(const matrix &other)
+{
+    if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
+        std::cout << "ahaha 123" << std::endl;
+        return *this;
+    }
+
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        row_t &row = data_[index_row];
+        for (int index_col = 0; index_col != num_cols_; ++index_col) {
+            row[index_col] -= other[index_row][index_col];
+        }
+    }
 
     return *this;
+}
+
+template <typename T>
+matrix<T> product(const matrix<T> &matrix_1, const matrix<T> &matrix_2)
+{
+    size_t num_rows = matrix_1.get_num_rows();
+    size_t num_cols = matrix_1.get_num_cols();
+    if (num_rows != matrix_2.get_num_cols() || num_cols != matrix_2.get_num_rows()) {
+        std::cout << "ahaha 123" << std::endl;
+        return matrix<T> {};
+    }
+    
+    matrix<T> muled {num_rows, num_rows};
+    matrix<T> matrix_2_transposed = matrix_2;
+    matrix_2_transposed.transpose();
+
+    for (int index = 0; index != num_rows; ++index) {
+        for (int index_row = 0; index_row != num_rows; ++index_row) {
+            T val = T {0};
+            for (int index_col = 0; index_col != num_cols; ++index_col) {
+                val += matrix_1[index][index_col] * matrix_2_transposed[index_row][index_col];
+            }
+            muled[index][index_row] = val;
+        }
+    }
+
+    return muled;
+}
+
+template <typename T>
+matrix<T> operator*(const matrix<T> &matrix_mul, const T &value)
+{
+    matrix<T> muled {matrix_mul};
+    muled *= value;
+
+    return muled;
+}
+
+template <typename T>
+matrix<T> operator*(const T &value, const matrix<T> &matrix_mul)
+{
+    matrix<T> muled {matrix_mul};
+    muled *= value;
+
+    return muled;
+}
+
+template <typename T>
+matrix<T> &matrix<T>::operator*=(const T &value)
+{
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        row_t &data_row = data_[index_row];
+        for (int index_col = 0; index_col != num_cols_; ++index_col) {
+            data_row[index_col] *= value;
+        }
+    }
+
+    return *this;
+}
+
+template <typename T>
+bool matrix<T>::operator!=(const matrix &other) const
+{
+    if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
+        return false;
+    }
+
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        const row_t &row = data_[index_row];
+        const row_t &othr_row = other[index_row].row;
+        for (int index_col = 0; index_col != num_cols_; ++index_col) {
+            if (row[index_col] != othr_row[index_col]) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+template <typename T>
+bool matrix<T>::operator==(const matrix &other) const
+{
+    return !(operator!=(other));
+}
+
+template <typename T>
+T matrix<T>::determinant() const
+{
+    if (!is_square()) {
+        std::cout << "ahaha 123" << std::endl;
+        return {};
+    }
+
+    matrix lower = eye(num_rows_, num_cols_);
+    matrix upper_transposed = square(num_rows_);
+
+    T determinant = T {1};
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        const row_t &data_row = data_[index_row];
+        row_t &lower_row = lower[index_row].row;
+        for (int index_col = 0; index_col != num_rows_; ++index_col) {
+            row_t &upper_row = upper_transposed[index_col].row;
+            T temp {};
+            if (index_col >= index_row) {
+                for (int index = 0; index != index_row; ++index) {
+                    temp += lower_row[index] * upper_row[index];
+                }
+
+                T elem = data_row[index_col] - temp;
+                upper_row[index_row] = elem;
+                if (index_row == index_col) {
+                    determinant *= elem;
+                }
+
+            } else {
+                for (int index = 0; index != index_col; ++index) {
+                    temp += lower_row[index] * upper_row[index];
+                }
+
+                T elem = upper_row[index_col];
+                if (elem == T {0}) {
+                    return T {0};
+                }
+                lower_row[index_col] = (data_row[index_col] - temp) / elem;
+            }
+        }
+    }
+
+    return determinant;
+}
+
+template <typename T>
+matrix<T> &matrix<T>::transpose()
+{
+    matrix<T> transposed_matrix {num_cols_, num_rows_};
+
+    for (int index_row = 0; index_row != num_cols_; ++index_row) {
+        row_t &row = transposed_matrix[index_row].row;
+        for (int index_col = 0; index_col != num_rows_; ++index_col) {
+            row[index_col] = data_[index_col][index_row];
+        }
+    }
+
+    std::swap(*this, transposed_matrix);
+
+    return *this;
+}
+
+template <typename T>
+void matrix<T>::swap_rows(const size_t num_row_1, const size_t num_row_2)
+{
+    if (num_row_1 >= num_rows_ || num_row_2 >= num_rows_) {
+        std::cout << "ahaha 123" << std::endl;
+        return;
+    }
+
+    std::swap(data_[num_row_1], data_[num_row_2]);
+}
+
+template <typename T>
+void matrix<T>::add_row(const size_t num_row_1, const size_t num_row_2)
+{
+    if (num_row_1 >= num_rows_ || num_row_2 >= num_rows_) {
+        std::cout << "ahaha 123" << std::endl;
+        return;
+    }
+
+    row_t &data_row = data_[num_row_1];
+    const row_t &data_row_add = data_[num_row_2];
+    for (int index_col = 0; index_col != num_cols_; ++index_col) {
+        data_row[index_col] += data_row_add[index_col];
+    }
 }
 
 template <typename T>
@@ -145,7 +375,7 @@ size_t matrix<T>::get_num_cols() const
 }
 
 template <typename T>
-bool matrix<T>::is_square () const
+bool matrix<T>::is_square() const
 {
     return num_cols_ == num_rows_;
 }

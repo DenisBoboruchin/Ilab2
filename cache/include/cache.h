@@ -19,6 +19,7 @@ public:
     bool lookup_update(const keyT key, const F slow_get_page);
 
     bool is_full() const;
+    void cache_dump() const;
 
 private:
     struct elem_t;
@@ -32,8 +33,6 @@ private:
     };
 
     int delete_unusable_elem_();
-
-    void cache_dump_() const;
 
 private:
     std::list<std::pair<int, std::list<elem_t>>> lists_;
@@ -111,8 +110,8 @@ int cache_lfu<T, keyT>::delete_unusable_elem_()
     hash_list_.erase(unuse_key);
     unuse_pair_itr->second.pop_back();
 
-    if (unuse_pair_itr->first != START_ELEMS_FREQ) {
-        if (!unuse_pair_itr->second.size()) {
+    if (!unuse_pair_itr->second.size()) {
+        if (unuse_pair_itr->first != START_ELEMS_FREQ) {
             lists_.pop_front();
         }
     }
@@ -123,7 +122,7 @@ int cache_lfu<T, keyT>::delete_unusable_elem_()
 }
 
 template <typename T, typename keyT>
-void cache_lfu<T, keyT>::cache_dump_() const
+void cache_lfu<T, keyT>::cache_dump() const
 {
     listsItr end_lists = lists_.end();
     for (listsItr pair = lists_.begin(); pair != end_lists; ++pair) {
@@ -193,7 +192,7 @@ int cache_perfect<T, keyT>::lookup_update(std::vector<keyT> &keys, F slow_get_pa
 
             if (is_full()) {
                 cacheItr unusable_key_itr = cache_.begin();
-                if (unusable_key_itr->first < to_next) {
+                if (unusable_key_itr->first <= to_next) {
                     continue;
                 }
 
@@ -228,7 +227,7 @@ int cache_perfect<T, keyT>::lookup_update(std::vector<keyT> &keys, F slow_get_pa
 template <typename T, typename keyT>
 std::vector<unsigned> cache_perfect<T, keyT>::first_pass_keys_(std::vector<keyT> &keys)
 {
-    std::vector<unsigned> freq_use(keys.size(), UINT_MAX);
+    std::vector<unsigned> dist_use(keys.size(), UINT_MAX);
 
     for (unsigned num_key = 0, size = keys.size(); num_key != size; ++num_key) {
         keyT key = keys.at(num_key);
@@ -237,19 +236,20 @@ std::vector<unsigned> cache_perfect<T, keyT>::first_pass_keys_(std::vector<keyT>
         if (check_prev != prev_use_hash_.end()) {
             unsigned num_prev_use = check_prev->second;
 
-            freq_use.at(num_prev_use) = num_key - num_prev_use;
+            dist_use.at(num_prev_use) = num_key - num_prev_use;
+            prev_use_hash_[key] = num_key;
+        } else {
+            prev_use_hash_.insert({key, num_key});
         }
-
-        prev_use_hash_[key] = num_key;
     }
 
-    return freq_use;
+    return dist_use;
 }
 
 template <typename T, typename keyT>
 bool cache_perfect<T, keyT>::is_full() const
 {
-    return (cache_.size() == capacity_);
+    return cache_.size() == capacity_;
 }
 
 template <typename T, typename keyT = int>
@@ -262,8 +262,7 @@ public:
 
     bool is_full() const;
 
-private:
-    void cache_dump_(void) const;
+    void cache_dump() const;
 
 private:
     size_t capacity_ = 512;
@@ -294,14 +293,15 @@ bool cache_lru<T, keyT>::lookup_update(const keyT key, const F slow_get_page)
     }
 
     listItr page_itr = hash_itr_page->second;
-    if (page_itr != cache_.begin())
+    if (page_itr != cache_.begin()) {
         cache_.splice(cache_.begin(), cache_, page_itr);
+    }
 
     return true;
 }
 
 template <typename T, typename keyT>
-void cache_lru<T, keyT>::cache_dump_(void) const
+void cache_lru<T, keyT>::cache_dump() const
 {
     printf("in cache: ");
 
@@ -319,7 +319,7 @@ void cache_lru<T, keyT>::cache_dump_(void) const
 template <typename T, typename keyT>
 bool cache_lru<T, keyT>::is_full() const
 {
-    return (cache_.size() == capacity_);
+    return cache_.size() == capacity_;
 }
 
 }  // namespace caches
