@@ -116,15 +116,15 @@ public:
     {
         return capacity_;
     }
-    T &operator[](std::size_t n) &noexcept
+    T &operator[](std::size_t n) & noexcept
     {
         return arr[n];
     }
-    T &&operator[](std::size_t n) &&noexcept
+    T &&operator[](std::size_t n) && noexcept
     {
         return std::move(arr[n]);
     }
-    const T &operator[](std::size_t n) const &noexcept
+    const T &operator[](std::size_t n) const & noexcept
     {
         return arr[n];
     }
@@ -209,10 +209,10 @@ public:
         }
         size_++;
     }
-    void pop_back() noexcept &
+    void pop_back() & noexcept
     {
-        arr[size_].~T();
         size_--;
+        arr[size_].~T();
     }
     void resize(std::size_t n) &
     {

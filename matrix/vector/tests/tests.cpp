@@ -20,14 +20,6 @@ TEST(vector, Default_initialize) {
     ASSERT_TRUE(x.empty());
     ASSERT_TRUE(x.size() == 0);
     ASSERT_TRUE(x.capacity() == 0);
-    try
-    {
-        x.pop_back();
-    }
-    catch (std::out_of_range const& e)
-    {
-        std::cout << e.what() << '\n';
-    }
     ASSERT_THROW(x.at(0), std::out_of_range);
     ASSERT_THROW(x.at(1), std::out_of_range);
 }
