@@ -2,6 +2,7 @@
 #define MATRIX_HPP
 
 #include <iostream>
+#include <exception>
 
 #include "vector.h"
 
@@ -117,8 +118,7 @@ template <typename T>
 matrix<T> matrix<T>::operator+(const matrix &other) const
 {
     if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
-        std::cout << "ahaha 123" << std::endl;
-        return matrix<T> {};
+        throw std::logic_error("not stackable");
     }
 
     matrix<T> sum {*this};
@@ -131,8 +131,7 @@ template <typename T>
 matrix<T> &matrix<T>::operator+=(const matrix &other)
 {
     if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
-        std::cout << "ahaha 123" << std::endl;
-        return *this;
+        throw std::logic_error("not stackable");
     }
 
     for (int index_row = 0; index_row != num_rows_; ++index_row) {
@@ -149,8 +148,7 @@ template <typename T>
 matrix<T> matrix<T>::operator-(const matrix &other) const
 {
     if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
-        std::cout << "ahaha 123" << std::endl;
-        return {};
+        throw std::logic_error("not deductible");
     }
 
     matrix<T> sub {*this};
@@ -163,8 +161,7 @@ template <typename T>
 matrix<T> &matrix<T>::operator-=(const matrix &other)
 {
     if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
-        std::cout << "ahaha 123" << std::endl;
-        return *this;
+        throw std::logic_error("not deductible");
     }
 
     for (int index_row = 0; index_row != num_rows_; ++index_row) {
@@ -183,10 +180,9 @@ matrix<T> product(const matrix<T> &matrix_1, const matrix<T> &matrix_2)
     size_t num_rows = matrix_1.get_num_rows();
     size_t num_cols = matrix_1.get_num_cols();
     if (num_rows != matrix_2.get_num_cols() || num_cols != matrix_2.get_num_rows()) {
-        std::cout << "ahaha 123" << std::endl;
-        return matrix<T> {};
+        throw std::logic_error("not multiplicable");
     }
-    
+
     matrix<T> muled {num_rows, num_rows};
     matrix<T> matrix_2_transposed = matrix_2;
     matrix_2_transposed.transpose();
@@ -239,7 +235,7 @@ template <typename T>
 bool matrix<T>::operator!=(const matrix &other) const
 {
     if (num_rows_ != other.get_num_rows() || num_cols_ != other.get_num_cols()) {
-        return false;
+        throw std::logic_error("not compariable");
     }
 
     for (int index_row = 0; index_row != num_rows_; ++index_row) {
@@ -265,8 +261,7 @@ template <typename T>
 T matrix<T>::determinant() const
 {
     if (!is_square()) {
-        std::cout << "ahaha 123" << std::endl;
-        return {};
+        throw std::logic_error("not square");
     }
 
     matrix lower = eye(num_rows_, num_cols_);
@@ -327,9 +322,8 @@ matrix<T> &matrix<T>::transpose()
 template <typename T>
 void matrix<T>::swap_rows(const size_t num_row_1, const size_t num_row_2)
 {
-    if (num_row_1 >= num_rows_ || num_row_2 >= num_rows_) {
-        std::cout << "ahaha 123" << std::endl;
-        return;
+    if (num_row_1 >= num_rows_ || num_row_2 >= num_rows_ || num_row_1 < 0 || num_row_2 < 0) {
+        throw std::out_of_range("num out of range");
     }
 
     std::swap(data_[num_row_1], data_[num_row_2]);
@@ -338,9 +332,8 @@ void matrix<T>::swap_rows(const size_t num_row_1, const size_t num_row_2)
 template <typename T>
 void matrix<T>::add_row(const size_t num_row_1, const size_t num_row_2)
 {
-    if (num_row_1 >= num_rows_ || num_row_2 >= num_rows_) {
-        std::cout << "ahaha 123" << std::endl;
-        return;
+    if (num_row_1 >= num_rows_ || num_row_2 >= num_rows_ || num_row_1 < 0 || num_row_2 < 0) {
+        throw std::out_of_range("num out of range");
     }
 
     row_t &data_row = data_[num_row_1];

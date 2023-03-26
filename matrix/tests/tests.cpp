@@ -82,8 +82,8 @@ TEST(matrix, product)
     matrix<int> matrix1(2, 3, 1);
     matrix<int> matrix2(3, 2, 2);
 
-    matrix<int> matrix_mul = matrix_space::product (matrix1, matrix2);
-    matrix<int> res (2, 2, 6);
+    matrix<int> matrix_mul = matrix_space::product(matrix1, matrix2);
+    matrix<int> res(2, 2, 6);
 
     ASSERT_EQ(matrix_mul == res, true);
 }
