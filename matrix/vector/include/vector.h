@@ -270,7 +270,7 @@ public:
             size_ = n;
         }
     }
-    void clear() &
+    void clear() & noexcept
     {
         del(0, size_, arr);
         size_ = 0;
