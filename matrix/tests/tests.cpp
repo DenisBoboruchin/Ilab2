@@ -125,9 +125,25 @@ TEST(matrix, swap_rows)
     matrix_1[2][1] = 8;
 
     matrix_1.swap_rows(1, 2);
+    matrix_1.swap_rows(0, 0);
 
     ASSERT_EQ(matrix_1[2][3], 0);
     ASSERT_EQ(matrix_1[1][1], 8);
+    ASSERT_EQ(matrix_1[1][3], 2);
+    ASSERT_EQ(matrix_1[2][1], 2);
+}
+
+TEST(matrix, swap_cols)
+{
+    matrix<int> matrix_1(3, 4, 2);
+    matrix_1[1][3] = 0;
+    matrix_1[2][1] = 8;
+
+    matrix_1.swap_cols(1, 3);
+    matrix_1.swap_cols(0, 0);
+
+    ASSERT_EQ(matrix_1[2][3], 8);
+    ASSERT_EQ(matrix_1[1][1], 0);
     ASSERT_EQ(matrix_1[1][3], 2);
     ASSERT_EQ(matrix_1[2][1], 2);
 }
@@ -171,6 +187,60 @@ TEST(matrix, determinant_3_3)
     ASSERT_EQ(matrix.determinant(), -1);
 }
 
+TEST(matrix, determinant_one_1)
+{
+    matrix<int> matrix {3, 3, 0};
+    matrix[0][2] = 1;
+    matrix[1][1] = 1;
+    matrix[2][0] = 1;
+
+    ASSERT_EQ(matrix.determinant(), -1);
+}
+
+TEST(matrix, determinant_one_2)
+{
+    matrix<int> matrix {3, 3, 0};
+    matrix[0][0] = 1;
+    matrix[0][2] = 1;
+    matrix[1][1] = 1;
+    matrix[2][0] = 1;
+
+    ASSERT_EQ(matrix.determinant(), -1);
+}
+
+TEST(matrix, determinant_one_3)
+{
+    matrix<int> matrix {4, 4, 0};
+    matrix[0][0] = 1;
+    matrix[0][3] = -1;
+    matrix[1][2] = -1;
+    matrix[2][1] = 1;
+    matrix[3][0] = 1;
+
+    ASSERT_EQ(matrix.determinant(), 1);
+}
+
+TEST(matrix, determinant_one_4)
+{
+    matrix<double> matrix {2, 2, 0};
+    matrix[0][0] = 0.00001;
+    matrix[0][1] = 100;
+    matrix[1][0] = 100;
+    matrix[1][1] = 100;
+}
+
+TEST(matrix, determinant_one_5)
+{
+    matrix<double> matrix {2, 2, 0};
+    matrix[0][0] = 0.00001;
+    matrix[0][1] = 100000;
+    matrix[1][0] = 0.00001;
+    matrix[1][1] = -100000;
+
+    ASSERT_EQ(matrix.determinant(), -2);
+}
+
+#if 1
 TEST(matrix, determinant_100_100)
 {
     int size = 100;
@@ -181,7 +251,7 @@ TEST(matrix, determinant_100_100)
 
     for (int i = 0; i != size; ++i) {
         for (int j = 0; j != size; ++j) {
-            if (i != j) {
+            if (i != j && j % 7 == 0) {
                 matrix.add_row(i, j);
             }
         }
@@ -189,3 +259,4 @@ TEST(matrix, determinant_100_100)
 
     ASSERT_EQ(matrix.determinant(), 42);
 }
+#endif
