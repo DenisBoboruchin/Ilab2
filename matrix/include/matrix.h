@@ -29,6 +29,7 @@ public:
 
     static matrix eye(const size_t num_rows, const size_t num_cols);
     static matrix square(const size_t num_rows, const T &value = {});
+    static matrix<double> to_double(const matrix<T> &other);
 
     proxy_row_t operator[](size_t num_row) &;
     const const_proxy_row_t operator[](size_t num_row) const &;
@@ -47,12 +48,18 @@ public:
     matrix &transpose();
 
     T determinant() const;
+    int full_pivoting(const size_t index_row);
 
     void swap_rows(const size_t num_row_1, const size_t num_row_2);
+    void swap_cols(const size_t num_col_1, const size_t num_col_2);
+
     void add_row(const size_t num_row_1, const size_t num_row_2);
+    void add_row(const size_t num_row_1, const row_t &row);
 
     size_t get_num_rows() const;
     size_t get_num_cols() const;
+
+    my_containers::vector<T> get_row(int num_row) const;
 
     bool is_square() const;
 
@@ -82,6 +89,23 @@ matrix<T> matrix<T>::eye(const size_t num_rows, const size_t num_cols)
     }
 
     return eye;
+}
+
+template <typename T>
+matrix<double> matrix<T>::to_double(const matrix<T> &other)
+{
+    size_t num_cols = other.get_num_cols();
+    size_t num_rows = other.get_num_rows();
+
+    matrix<double> matrix(num_cols, num_rows);
+    for (int index_row = 0; index_row != num_rows; ++index_row) {
+        const row_t &other_row = other[index_row].row;
+        for (int index_col = 0; index_col != num_cols; ++index_col) {
+            matrix[index_row][index_col] = other_row[index_col];
+        }
+    }
+
+    return matrix;
 }
 
 template <typename T>
@@ -258,48 +282,91 @@ bool matrix<T>::operator==(const matrix &other) const
 }
 
 template <typename T>
+int matrix<T>::full_pivoting(const size_t index)
+{
+    const double EPS = 0.001;
+    int swaps_coef = 1;
+
+    size_t index_swap_row = index;
+    T elem = std::abs(data_[index][index]);
+    while (elem < EPS && index_swap_row < num_cols_ - 1) {
+        ++index_swap_row;
+        elem = std::abs(data_[index_swap_row][index]);
+    }
+    if (elem > EPS) {
+        if (index != index_swap_row) {
+            swap_rows(index, index_swap_row);
+            swaps_coef *= -1;
+        }
+        return swaps_coef;
+    }
+
+    T max = std::abs(data_[index][index]);
+    size_t piv_row = index;
+    size_t piv_col = index;
+    for (int index_row = index; index_row != num_rows_; ++index_row) {
+        row_t &row = data_[index_row];
+        for (int index_col = index; index_col != num_cols_; ++index_col) {
+            T &value = row[index_col];
+            if (std::abs(value) > max) {
+                max = value;
+                piv_row = index_row;
+                piv_col = index_col;
+            }
+        }
+    }
+
+    if (index != piv_row) {
+        swaps_coef *= -1;
+        swap_rows(piv_row, index);
+    }
+    if (index != piv_col) {
+        swaps_coef *= -1;
+        swap_cols(piv_col, index);
+    }
+
+    return swaps_coef;
+}
+
+template <typename T>
 T matrix<T>::determinant() const
 {
     if (!is_square()) {
         throw std::logic_error("not square");
     }
-
-    matrix lower = eye(num_rows_, num_cols_);
-    matrix upper_transposed = square(num_rows_);
-
-    T determinant = T {1};
-    for (int index_row = 0; index_row != num_rows_; ++index_row) {
-        const row_t &data_row = data_[index_row];
-        row_t &lower_row = lower[index_row].row;
-        for (int index_col = 0; index_col != num_rows_; ++index_col) {
-            row_t &upper_row = upper_transposed[index_col].row;
-            T temp {};
-            if (index_col >= index_row) {
-                for (int index = 0; index != index_row; ++index) {
-                    temp += lower_row[index] * upper_row[index];
-                }
-
-                T elem = data_row[index_col] - temp;
-                upper_row[index_row] = elem;
-                if (index_row == index_col) {
-                    determinant *= elem;
-                }
-
-            } else {
-                for (int index = 0; index != index_col; ++index) {
-                    temp += lower_row[index] * upper_row[index];
-                }
-
-                T elem = upper_row[index_col];
-                if (elem == T {0}) {
-                    return T {0};
-                }
-                lower_row[index_col] = (data_row[index_col] - temp) / elem;
-            }
-        }
+    if (num_rows_ < 1) {
+        throw std::out_of_range("out of range");
     }
 
-    return determinant;
+    matrix<double> matrix = to_double(*this);
+
+    int swaps_coef = 1;
+    T determinant = T {1};
+    for (int index = 0; index != num_cols_; ++index) {
+        swaps_coef *= matrix.full_pivoting(index);
+        double elem = matrix[index][index];
+        for (int index_row = index + 1; index_row != num_rows_; ++index_row) {
+            double coef = -matrix[index_row][index] / elem;
+            auto row = matrix.get_row(index);
+            for (int i = 0, num = row.size(); i != num; ++i) {
+                row[i] *= coef;
+            }
+            matrix.add_row(index_row, row);
+        }
+
+        determinant *= elem;
+    }
+
+    return determinant * swaps_coef;
+}
+
+template <typename T>
+my_containers::vector<T> matrix<T>::get_row(int num_row) const
+{
+    if (num_row >= num_rows_ || num_row < 0) {
+        throw std::out_of_range("num out of range");
+    }
+    return data_[num_row];
 }
 
 template <typename T>
@@ -326,7 +393,30 @@ void matrix<T>::swap_rows(const size_t num_row_1, const size_t num_row_2)
         throw std::out_of_range("num out of range");
     }
 
-    std::swap(data_[num_row_1], data_[num_row_2]);
+    if (num_row_1 != num_row_2) {
+        std::swap(data_[num_row_1], data_[num_row_2]);
+    }
+}
+
+template <typename T>
+void matrix<T>::swap_cols(const size_t num_col_1, const size_t num_col_2)
+{
+    if (num_col_1 >= num_cols_ || num_col_2 >= num_cols_ || num_col_1 < 0 || num_col_2 < 0) {
+        throw std::out_of_range("num out of range");
+    }
+
+    if (num_col_1 == num_col_2) {
+        return;
+    }
+
+    for (int index_row = 0; index_row != num_rows_; ++index_row) {
+        T &elem_1 = data_[index_row][num_col_1];
+        T &elem_2 = data_[index_row][num_col_2];
+        T temp_elem = elem_1;
+
+        elem_1 = elem_2;
+        elem_2 = temp_elem;
+    }
 }
 
 template <typename T>
@@ -340,6 +430,19 @@ void matrix<T>::add_row(const size_t num_row_1, const size_t num_row_2)
     const row_t &data_row_add = data_[num_row_2];
     for (int index_col = 0; index_col != num_cols_; ++index_col) {
         data_row[index_col] += data_row_add[index_col];
+    }
+}
+
+template <typename T>
+void matrix<T>::add_row(const size_t num_row_1, const row_t &row)
+{
+    if (num_row_1 >= num_rows_ || num_row_1 < 0 || row.size() != num_cols_) {
+        throw std::out_of_range("num out of range");
+    }
+
+    row_t &data_row = data_[num_row_1];
+    for (int index_col = 0; index_col != num_cols_; ++index_col) {
+        data_row[index_col] += row[index_col];
     }
 }
 
