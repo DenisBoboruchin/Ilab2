@@ -332,7 +332,6 @@ int matrix<T>::full_pivoting(const size_t index)
         swap_cols(piv_col, index);
     }
 
-    std::cout << "adsf\n";
     return swaps_coef;
 }
 
