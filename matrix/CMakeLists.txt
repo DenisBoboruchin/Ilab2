@@ -9,7 +9,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_COMPILER g++)
 
-include_directories (vector/include)
+include_directories (include vector/include)
+
+set(MATRIX_DETERMINANT_SOURCE src/matrix_det.cpp)
+
+#matrix_determinant
+add_executable (matrix_determinant ${MATRIX_DETERMINANT_SOURCE})
+add_custom_target (run_matrix_determinant 
+    COMMAND ./matrix_determinant
+)
+add_dependencies (run_matrix_determinant matrix_determinant)
 
 #tests
 option(TESTING "Include testing" ON)

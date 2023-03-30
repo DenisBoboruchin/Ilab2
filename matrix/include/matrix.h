@@ -287,23 +287,9 @@ int matrix<T>::full_pivoting(const size_t index)
     const double EPS = 0.001;
     int swaps_coef = 1;
 
-#if 0
-    size_t index_swap_row = index;
-    T elem = std::abs(data_[index][index]);
-    while (elem < EPS && index_swap_row < num_cols_ - 1) {
-        ++index_swap_row;
-        elem = std::abs(data_[index_swap_row][index]);
-    }
-    if (elem > EPS) {
-        if (index != index_swap_row) {
-            swap_rows(index, index_swap_row);
-            swaps_coef *= -1;
-        }
-        return swaps_coef;
-    }
-#endif
     T max = std::abs(data_[index][index]);
     size_t piv_row = index;
+
     for (int index_swap_row = index; index_swap_row != num_cols_; ++index_swap_row) {
         T abs_value = std::abs(data_[index_swap_row][index]);
         if (abs_value > max) {
@@ -346,6 +332,7 @@ int matrix<T>::full_pivoting(const size_t index)
         swap_cols(piv_col, index);
     }
 
+    std::cout << "adsf\n";
     return swaps_coef;
 }
 
