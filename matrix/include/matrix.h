@@ -287,6 +287,7 @@ int matrix<T>::full_pivoting(const size_t index)
     const double EPS = 0.001;
     int swaps_coef = 1;
 
+#if 0
     size_t index_swap_row = index;
     T elem = std::abs(data_[index][index]);
     while (elem < EPS && index_swap_row < num_cols_ - 1) {
@@ -300,20 +301,40 @@ int matrix<T>::full_pivoting(const size_t index)
         }
         return swaps_coef;
     }
-
+#endif
     T max = std::abs(data_[index][index]);
     size_t piv_row = index;
+    for (int index_swap_row = index; index_swap_row != num_cols_; ++index_swap_row) {
+        T abs_value = std::abs(data_[index_swap_row][index]);
+        if (abs_value > max) {
+            max = abs_value;
+            piv_row = index_swap_row;
+        }
+    }
+
+    if (max > EPS) {
+        if (index != piv_row) {
+            swap_rows(index, piv_row);
+            swaps_coef *= -1;
+        }
+        return swaps_coef;
+    }
+
     size_t piv_col = index;
     for (int index_row = index; index_row != num_rows_; ++index_row) {
         row_t &row = data_[index_row];
         for (int index_col = index; index_col != num_cols_; ++index_col) {
-            T &value = row[index_col];
-            if (std::abs(value) > max) {
-                max = value;
+            T abs_value = std::abs(row[index_col]);
+            if (abs_value > max) {
+                max = abs_value;
                 piv_row = index_row;
                 piv_col = index_col;
             }
         }
+    }
+
+    if (max == T {0}) {
+        return 0;
     }
 
     if (index != piv_row) {
@@ -344,6 +365,10 @@ T matrix<T>::determinant() const
     T determinant = T {1};
     for (int index = 0; index != num_cols_; ++index) {
         swaps_coef *= matrix.full_pivoting(index);
+        if (swaps_coef == 0) {
+            return T {0};
+        }
+
         double elem = matrix[index][index];
         for (int index_row = index + 1; index_row != num_rows_; ++index_row) {
             double coef = -matrix[index_row][index] / elem;

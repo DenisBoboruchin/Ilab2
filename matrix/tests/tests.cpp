@@ -240,6 +240,43 @@ TEST(matrix, determinant_one_5)
     ASSERT_EQ(matrix.determinant(), -2);
 }
 
+TEST(matrix, determinant_zero_6)
+{
+    matrix<double> matrix {2, 2, 0};
+
+    ASSERT_EQ(matrix.determinant(), 0);
+}
+
+TEST(matrix, determinant_zero_7)
+{
+    matrix<double> matrix {2, 2, 0};
+    matrix[0][0] = 0.000001;
+
+    ASSERT_EQ(matrix.determinant(), 0);
+}
+
+TEST(matrix, determinant_1)
+{
+    matrix<int> matrix {4, 4, 2};
+    matrix[0][0] = 1;
+    matrix[1][1] = 1;
+    matrix[2][2] = 1;
+    matrix[3][3] = 1;
+
+    ASSERT_EQ(matrix.determinant(), -7);
+}
+
+TEST(matrix, determinant_2)
+{
+    matrix<int> matrix {4, 4, 0};
+    matrix[0][1] = -1;
+    matrix[1][0] = 1;
+    matrix[2][3] = -1;
+    matrix[3][2] = 1;
+
+    ASSERT_EQ(matrix.determinant(), 1);
+}
+
 #if 1
 TEST(matrix, determinant_100_100)
 {
