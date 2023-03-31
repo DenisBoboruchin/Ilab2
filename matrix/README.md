@@ -22,7 +22,7 @@ To compile tests:
 ```
 make matrix_tests
 ```
-To compile maint program:
+To compile main program:
 ```
 make matrix_determinant
 ```
