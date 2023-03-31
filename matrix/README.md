@@ -18,6 +18,14 @@ mkdir build
 cd build
 сmake ..
 ```
+To compile tests:
+```
+make matrix_tests
+```
+To compile maint program:
+```
+make matrix_determinant
+```
 To compile all:
 ```
 make
