@@ -13,45 +13,80 @@
 namespace my_containers {
 
 template <typename T, typename Alloc = std::allocator<T>>
-class vector {
+class vectorBuf
+{
+protected:
+    vectorBuf(const vectorBuf& rhs) = delete;
+    vectorBuf& operator=(const vectorBuf& rhs) = delete;
+    
+    vectorBuf(vectorBuf&& rhs) noexcept(
+        std::is_nothrow_move_constructible_v<T>) 
+    : capacity_(std::exchange(rhs.capacity_, 0))
+        , size_(std::exchange(rhs.size_, 0))
+        , arr(std::exchange(rhs.arr, nullptr)) {}
+
+    vectorBuf& operator=(vectorBuf&& rhs) noexcept(
+        std::is_nothrow_move_constructible<T>::value &&
+        std::is_nothrow_move_assignable<T>::value
+    )
+    {
+        std::swap(capacity_, rhs.capacity_);
+        std::swap(size_, rhs.size_);
+        std::swap(arr, rhs.arr);
+    }
+
+    explicit vectorBuf(std::size_t capacity) :
+            capacity_{capacity}, arr{capacity_ == 0 ? nullptr 
+                                : Alloc().allocate(capacity_)} {}
+
+    ~vectorBuf()
+    {
+        for (std::size_t i = 0; i < capacity_; ++i)
+            Alloc().destroy(arr[i]);
+        Alloc().deallocate(arr, capacity_);
+    }
+protected:
+
+    std::size_t size_ = 0;
+    std::size_t capacity_ = 0;
+    T* arr;
+};
+
+template <typename T, typename Alloc = std::allocator<T>>
+class vector : private vectorBuf<T, Alloc> {
     static_assert(std::is_nothrow_move_constructible_v<T>);
     static_assert(std::is_nothrow_move_assignable_v<T>);
     static_assert(std::is_nothrow_destructible_v<T>);
 
+    using vectorBuf<T, Alloc>::capacity_;
+    using vectorBuf<T, Alloc>::size_;
+    using vectorBuf<T, Alloc>::arr;
 public:
     vector() = default;
-    vector(size_t n, const T &value) : capacity_(new_cap(n)), arr(All(capacity_)), size_(n)
+    
+    vector(size_t n, const T &value) : vectorBuf<T, Alloc>(n)
     {
         for (std::size_t i = 0; i < size_; i++) {
-            new (arr + i) T(value);
+            new (arr + i) T{value};
         }
     }
-    explicit vector(std::size_t n) : capacity_(new_cap(n)), arr(All(capacity_)), size_(n)
+
+    explicit vector(std::size_t n) : vectorBuf<T, Alloc>(n)
     {
         for (std::size_t i = 0; i < size_; i++) {
-            new (arr + i) T();
+            new (arr + i) T{};
         }
     }
-    vector(const vector &other) : capacity_(new_cap(other.size_)), arr(All(capacity_)), size_(other.size_)
+
+    vector(const vector &rhs) : vectorBuf<T, Alloc>(rhs.size_)
     {
         for (std::size_t i = 0; i < size_; i++) {
-            try {
-                new (arr + i) T(other.arr[i]);
-            } catch (...) {
-                for (std::size_t j = 0; j < i; j++) {
-                    arr[j].~T();
-                }
-                Alloc().deallocate(arr, capacity_);
-                throw;
-            }
+            new (arr + i) T(rhs.arr[i]);
         }
     }
-    vector(vector &&other) noexcept
-        : capacity_(std::exchange(other.capacity_, 0))
-        , arr(std::exchange(other.arr, nullptr))
-        , size_(std::exchange(other.size_, 0))
-    {
-    }
+
+    vector(vector &&rhs) noexcept : vectorBuf<T, Alloc>(rhs) {}
+
     ~vector()
     {
         del(0, size_, arr);
@@ -61,47 +96,30 @@ public:
         size_ = 0;
         capacity_ = 0;
     }
+
     vector &operator=(vector &&other) noexcept
     {
-        if (this != &other) {
-            if (capacity_ != 0) {
-                for (std::size_t i = 0; i < size_; i++) {
-                    arr[i].~T();
-                }
-                Alloc().deallocate(arr, capacity_);
+        if (this == &other)
+            return *this;
+
+        if (capacity_ != 0) {
+            for (std::size_t i = 0; i < size_; i++) {
+                arr[i].~T();
             }
-            std::swap(capacity_, other.capacity_);
-            arr = std::exchange(other.arr, nullptr);
-            size_ = std::exchange(other.size_, 0);
+            Alloc().deallocate(arr, capacity_);
         }
+
+        std::swap(capacity_, other.capacity_);
+        arr = std::exchange(other.arr, nullptr);
+        size_ = std::exchange(other.size_, 0);
+        
         return *this;
     }
-    vector &operator=(const vector &other)
+
+    vector &operator=(const vector &rhs)
     {
-        if (this != &other) {
-            std::size_t tmp_capacity_ = new_cap(other.size_);
-            T *buf = All(tmp_capacity_);
-            for (std::size_t i = 0; i < other.size_; i++) {
-                try {
-                    new (buf + i) T(other.arr[i]);
-                } catch (...) {
-                    for (std::size_t j = 0; j < i; j++) {
-                        buf[j].~T();
-                    }
-                    Alloc().deallocate(buf, tmp_capacity_);
-                    throw;
-                }
-            }
-            if (capacity_ != 0) {
-                for (std::size_t i = 0; i < size_; i++) {
-                    arr[i].~T();
-                }
-                Alloc().deallocate(arr, capacity_);
-            }
-            std::swap(arr, buf);
-            capacity_ = tmp_capacity_;
-            size_ = other.size_;
-        }
+        vector tmp(rhs);
+        std::swap(*this, tmp);
         return *this;
     }
     [[nodiscard]] std::size_t size() const noexcept
@@ -277,18 +295,15 @@ public:
     }
 
 private:
-    std::size_t capacity_ = 0;
-    T *arr = nullptr;
-    std::size_t size_ = 0;
-    std::size_t new_cap(std::size_t x)
+    std::size_t new_cap(std::size_t x) noexcept
     {
-        if (x == 0) {
+        if (x == 0)
             return 0;
-        }
+
         std::size_t y = 1;
-        while (y < x) {
+
+        while (y < x)
             y *= 2;
-        }
         return y;
     }
 
