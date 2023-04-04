@@ -13,31 +13,33 @@
 namespace my_containers {
 
 template <typename T, typename Alloc = std::allocator<T>>
-class vectorBuf
-{
+class vectorBuf {
 protected:
     static_assert(std::is_nothrow_move_constructible_v<T>);
     static_assert(std::is_nothrow_move_assignable_v<T>);
     static_assert(std::is_nothrow_destructible_v<T>);
 
-    vectorBuf(const vectorBuf& rhs) = delete;
-    vectorBuf& operator=(const vectorBuf& rhs) = delete;
-    
-    vectorBuf(vectorBuf&& rhs) noexcept
-    : capacity_(std::exchange(rhs.capacity_, 0))
-        , size_(std::exchange(rhs.size_, 0))
-        , arr(std::exchange(rhs.arr, nullptr)) {}
+    vectorBuf(const vectorBuf &rhs) = delete;
+    vectorBuf &operator=(const vectorBuf &rhs) = delete;
 
-    vectorBuf& operator=(vectorBuf&& rhs) noexcept
+    vectorBuf(vectorBuf &&rhs) noexcept
+        : capacity_(std::exchange(rhs.capacity_, 0))
+        , size_(std::exchange(rhs.size_, 0))
+        , arr(std::exchange(rhs.arr, nullptr))
+    {
+    }
+
+    vectorBuf &operator=(vectorBuf &&rhs) noexcept
     {
         std::swap(capacity_, rhs.capacity_);
         std::swap(size_, rhs.size_);
         std::swap(arr, rhs.arr);
     }
 
-    explicit vectorBuf(std::size_t capacity) :
-            capacity_{capacity}, arr{capacity_ == 0 ? nullptr 
-                                : Alloc().allocate(capacity_)} {}
+    explicit vectorBuf(std::size_t capacity)
+        : capacity_ {capacity}, arr {capacity_ == 0 ? nullptr : Alloc().allocate(capacity_)}
+    {
+    }
 
     ~vectorBuf()
     {
@@ -45,11 +47,11 @@ protected:
             Alloc().destroy(arr[i]);
         Alloc().deallocate(arr, capacity_);
     }
-protected:
 
+protected:
     std::size_t size_ = 0;
     std::size_t capacity_ = 0;
-    T* arr;
+    T *arr;
 };
 
 template <typename T, typename Alloc = std::allocator<T>>
@@ -61,20 +63,21 @@ class vector : private vectorBuf<T, Alloc> {
     using vectorBuf<T, Alloc>::capacity_;
     using vectorBuf<T, Alloc>::size_;
     using vectorBuf<T, Alloc>::arr;
+
 public:
     vector() = default;
-    
+
     vector(size_t n, const T &value) : vectorBuf<T, Alloc>(n)
     {
         for (std::size_t i = 0; i < size_; i++) {
-            new (arr + i) T{value};
+            new (arr + i) T {value};
         }
     }
 
     explicit vector(std::size_t n) : vectorBuf<T, Alloc>(n)
     {
         for (std::size_t i = 0; i < size_; i++) {
-            new (arr + i) T{};
+            new (arr + i) T {};
         }
     }
 
@@ -112,7 +115,7 @@ public:
         std::swap(capacity_, other.capacity_);
         arr = std::exchange(other.arr, nullptr);
         size_ = std::exchange(other.size_, 0);
-        
+
         return *this;
     }
 
