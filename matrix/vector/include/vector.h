@@ -16,19 +16,19 @@ template <typename T, typename Alloc = std::allocator<T>>
 class vectorBuf
 {
 protected:
+    static_assert(std::is_nothrow_move_constructible_v<T>);
+    static_assert(std::is_nothrow_move_assignable_v<T>);
+    static_assert(std::is_nothrow_destructible_v<T>);
+
     vectorBuf(const vectorBuf& rhs) = delete;
     vectorBuf& operator=(const vectorBuf& rhs) = delete;
     
-    vectorBuf(vectorBuf&& rhs) noexcept(
-        std::is_nothrow_move_constructible_v<T>) 
+    vectorBuf(vectorBuf&& rhs) noexcept
     : capacity_(std::exchange(rhs.capacity_, 0))
         , size_(std::exchange(rhs.size_, 0))
         , arr(std::exchange(rhs.arr, nullptr)) {}
 
-    vectorBuf& operator=(vectorBuf&& rhs) noexcept(
-        std::is_nothrow_move_constructible<T>::value &&
-        std::is_nothrow_move_assignable<T>::value
-    )
+    vectorBuf& operator=(vectorBuf&& rhs) noexcept
     {
         std::swap(capacity_, rhs.capacity_);
         std::swap(size_, rhs.size_);
