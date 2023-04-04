@@ -44,7 +44,7 @@ protected:
     ~vectorBuf()
     {
         for (std::size_t i = 0; i < capacity_; ++i)
-            Alloc().destroy(arr[i]);
+            arr[i].~T();
         Alloc().deallocate(arr, capacity_);
     }
 
@@ -88,7 +88,7 @@ public:
         }
     }
 
-    vector(vector &&rhs) noexcept : vectorBuf<T, Alloc>(rhs) {}
+    vector(vector &&rhs) noexcept : vectorBuf<T, Alloc>(std::move(rhs)) {}
 
     ~vector()
     {
