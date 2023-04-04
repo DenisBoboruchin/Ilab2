@@ -41,7 +41,7 @@ protected:
 
     ~vectorBuf()
     {
-        for (std::size_t i = 0; i < capacity_; ++i)
+        for (std::size_t i = 0; i < size_; ++i)
             arr[i].~T();
         Alloc().deallocate(arr, capacity_);
     }
@@ -64,30 +64,33 @@ class vector : private vectorBuf<T, Alloc> {
 public:
     vector() = default;
     
-    vector(size_t n, const T &value) : vectorBuf<T, Alloc>(n)
+    vector(size_t n, const T &value) : vectorBuf<T, Alloc>(new_cap(n))
     {
-        for (std::size_t i = 0; i < size_; i++) {
+        for (std::size_t i = 0; i < n; i++) {
             new (arr + i) T{value};
+            size_++;
         }
     }
 
-    explicit vector(std::size_t n) : vectorBuf<T, Alloc>(n)
+    explicit vector(std::size_t n) : vectorBuf<T, Alloc>(new_cap(n))
     {
-        for (std::size_t i = 0; i < size_; i++) {
+        for (std::size_t i = 0; i < n; i++) {
             new (arr + i) T{};
+            size_++;
         }
     }
 
-    vector(const vector &rhs) : vectorBuf<T, Alloc>(rhs.size_)
+    vector(const vector &rhs) : vectorBuf<T, Alloc>(rhs.capacity_)
     {
-        for (std::size_t i = 0; i < size_; i++) {
+        for (std::size_t i = 0; i < rhs.size_; i++) {
             new (arr + i) T(rhs.arr[i]);
+            size_++;
         }
     }
 
     vector(vector &&rhs) noexcept : vectorBuf<T, Alloc>(std::move(rhs)) {}
 
-    ~vector()
+/*    ~vector()
     {
         del(0, size_, arr);
         if (capacity_ != 0) {
@@ -95,7 +98,7 @@ public:
         }
         size_ = 0;
         capacity_ = 0;
-    }
+    }*/
 
     vector &operator=(vector &&other) noexcept
     {
@@ -122,6 +125,7 @@ public:
         std::swap(*this, tmp);
         return *this;
     }
+    
     [[nodiscard]] std::size_t size() const noexcept
     {
         return size_;
