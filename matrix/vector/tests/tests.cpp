@@ -7,8 +7,6 @@
 #include <type_traits>
 #include <vector>
 
-#define TEST_STD_VECTOR
-
 #ifdef TEST_STD_VECTOR
 using std::vector;
 #else
@@ -226,8 +224,8 @@ TEST(vector, Copy_construct)
     check_vec(orig);
 
 #ifndef TEST_STD_VECTOR
-    ASSERT_TRUE(orig.capacity() == 8);
-    ASSERT_TRUE(v.capacity() == 4);
+    ASSERT_EQ(orig.capacity(), 8);
+    ASSERT_EQ(v.capacity(), 4);
 #endif
 }
 
@@ -254,7 +252,7 @@ TEST(vector, Copy_assign)
     auto test_copy_to = [&](vector<ObjWithCopyAssignment> &v) {
         const auto &orig_const = orig;
         ASSERT_TRUE(&(v = orig_const) == &v);
-
+        
         check_vec(v);
         check_vec(orig);
     };
@@ -262,8 +260,8 @@ TEST(vector, Copy_assign)
     vector<ObjWithCopyAssignment> v;
     test_copy_to(v);
 #ifndef TEST_STD_VECTOR
-    ASSERT_TRUE(orig.capacity() == 8);
-    ASSERT_TRUE(v.capacity() == 4);
+    ASSERT_EQ(orig.capacity(), 8);
+    ASSERT_EQ(v.capacity(), 4);
 #endif
 
     vector<ObjWithCopyAssignment> v2(3, ObjWithCopyAssignment(20));
@@ -286,9 +284,9 @@ TEST(vector, Copy_assign)
     ObjWithCopyAssignment *orig_buf = &orig[0];
     test_copy_to(orig);
     // Ensure there were no extra copies.
-    ASSERT_TRUE(&orig[0] == orig_buf);
+    ASSERT_EQ(&orig[0], orig_buf);
 #ifndef TEST_STD_VECTOR
-    ASSERT_TRUE(orig.capacity() == 8);
+    ASSERT_EQ(orig.capacity(), 8);
 #endif
 }
 
@@ -306,6 +304,7 @@ TEST(vector, Move_construct)
     vector<MinimalObj> v = std::move(orig);
     ASSERT_TRUE(!v.empty());
     ASSERT_TRUE(v.size() == 5);
+    ASSERT_EQ(v.capacity(), 8);
 #ifndef TEST_STD_VECTOR
     ASSERT_TRUE(v.capacity() == 8);
 #endif
